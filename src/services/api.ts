@@ -87,10 +87,7 @@ class ApiService {
   //   await this.api.post('/auth/register', userData);
   // }
 async register(userData: RegisterRequest): Promise<void> {
-  console.log('=== FRONTEND REGISTER CALL ===');
-  console.log('API URL:', `${this.api.defaults.baseURL}/auth/register`);
-  console.log('User data:', userData);
-  
+
   try {
     const response = await this.api.post('/auth/register', userData);
     console.log('Register response:', response.data);

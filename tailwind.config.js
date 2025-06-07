@@ -1,9 +1,11 @@
+// tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html"
   ],
+  darkMode: 'class', // Enable class-based dark mode
   theme: {
     extend: {
       colors: {
@@ -38,6 +40,7 @@ module.exports = {
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-in': 'slideIn 0.3s ease-out',
+        'bounce-in': 'bounceIn 0.6s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -48,6 +51,27 @@ module.exports = {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
+        bounceIn: {
+          '0%': { transform: 'scale(0.3)', opacity: '0' },
+          '50%': { transform: 'scale(1.05)' },
+          '70%': { transform: 'scale(0.9)' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+      },
+      maxWidth: {
+        '8xl': '88rem',
+        '9xl': '96rem',
+      },
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+        '100': '100',
       }
     },
   },

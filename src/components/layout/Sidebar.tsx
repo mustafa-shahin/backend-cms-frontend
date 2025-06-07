@@ -1,6 +1,8 @@
+// src/components/layout/Sidebar.tsx
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import {
   HomeIcon,
   DocumentTextIcon,
@@ -8,6 +10,9 @@ import {
   BuildingOfficeIcon,
   MapPinIcon,
   CogIcon,
+  BriefcaseIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -16,6 +21,7 @@ import {
   BuildingOfficeIcon as BuildingOfficeIconSolid,
   MapPinIcon as MapPinIconSolid,
   CogIcon as CogIconSolid,
+  BriefcaseIcon as BriefcaseIconSolid,
 } from '@heroicons/react/24/solid';
 
 interface NavigationItem {
@@ -57,11 +63,18 @@ const navigation: NavigationItem[] = [
     icon: MapPinIcon, 
     iconSolid: MapPinIconSolid 
   },
+  { 
+    name: 'Jobs', 
+    href: '/dashboard/jobs', 
+    icon: BriefcaseIcon, 
+    iconSolid: BriefcaseIconSolid 
+  },
 ];
 
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
@@ -71,13 +84,13 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-lg">
+    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-gray-900 px-6 pb-4 shadow-lg border-r border-gray-200 dark:border-gray-700">
       <div className="flex h-16 shrink-0 items-center">
         <div className="flex items-center">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600">
             <span className="text-sm font-semibold text-white">CMS</span>
           </div>
-          <span className="ml-3 text-xl font-semibold text-gray-900">Backend CMS</span>
+          <span className="ml-3 text-xl font-semibold text-gray-900 dark:text-white">Backend CMS</span>
         </div>
       </div>
       
@@ -95,13 +108,13 @@ const Sidebar: React.FC = () => {
                       to={item.href}
                       className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-colors ${
                         active
-                          ? 'bg-primary-50 text-primary-600'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-primary-600'
+                          ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400'
                       }`}
                     >
                       <IconComponent
                         className={`h-6 w-6 shrink-0 ${
-                          active ? 'text-primary-600' : 'text-gray-400 group-hover:text-primary-600'
+                          active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400'
                         }`}
                         aria-hidden="true"
                       />
@@ -110,8 +123,8 @@ const Sidebar: React.FC = () => {
                         <span
                           className={`ml-auto w-9 min-w-max whitespace-nowrap rounded-full px-2.5 py-0.5 text-center text-xs font-medium leading-5 ${
                             active
-                              ? 'bg-primary-100 text-primary-600'
-                              : 'bg-gray-100 text-gray-900 group-hover:bg-gray-200'
+                              ? 'bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-300'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-300 group-hover:bg-gray-200 dark:group-hover:bg-gray-600'
                           }`}
                         >
                           {item.count}
@@ -125,29 +138,42 @@ const Sidebar: React.FC = () => {
           </li>
           
           <li className="mt-auto">
-            <div className="border-t border-gray-200 pt-6">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="group flex w-full gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400 mb-4"
+              >
+                {isDark ? (
+                  <SunIcon className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                ) : (
+                  <MoonIcon className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                )}
+                {isDark ? 'Light Mode' : 'Dark Mode'}
+              </button>
+
               {/* User Profile Section */}
-              <div className="flex items-center gap-x-4 px-2 py-3 text-sm font-semibold leading-6 text-gray-900">
-                <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-600">
+              <div className="flex items-center gap-x-4 px-2 py-3 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
+                <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-800 flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary-600 dark:text-primary-300">
                     {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
                   </span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
                 </div>
               </div>
               
               {/* Logout Button */}
               <button
                 onClick={logout}
-                className="group flex w-full gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-red-600"
+                className="group flex w-full gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-red-600 dark:hover:text-red-400"
               >
                 <svg
-                  className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-red-600"
+                  className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"

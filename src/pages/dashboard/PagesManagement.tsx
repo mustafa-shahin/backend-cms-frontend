@@ -1,12 +1,15 @@
+// src/pages/dashboard/PagesManagement.tsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { useForm } from 'react-hook-form';
 import { pagesApi } from '../../services/api';
-import { PageListItem } from '../../types/page';
+import { PageListItem, CreatePageRequest, UpdatePageRequest, PageStatus } from '../../types/page';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import Modal from '../../components/ui/Modal';
+import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
@@ -14,17 +17,47 @@ import toast from 'react-hot-toast';
 const PagesManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [pageToDelete, setPageToDelete] = useState<PageListItem | null>(null);
+  const [selectedPage, setSelectedPage] = useState<PageListItem | null>(null);
 
   const queryClient = useQueryClient();
   const pageSize = 10;
 
-  const { data: pagesData, isLoading, error } = useQuery(
+  const { data: pagesData, isLoading } = useQuery(
     ['pages', currentPage, searchTerm],
     () => pagesApi.getPages(currentPage, pageSize, searchTerm),
+    { keepPreviousData: true }
+  );
+
+  const createForm = useForm<CreatePageRequest>();
+  const editForm = useForm<UpdatePageRequest>();
+
+  const createMutation = useMutation(pagesApi.createPage, {
+    onSuccess: () => {
+      queryClient.invalidateQueries(['pages']);
+      toast.success('Page created successfully');
+      setCreateModalOpen(false);
+      createForm.reset();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to create page');
+    },
+  });
+
+  const updateMutation = useMutation(
+    ({ id, data }: { id: string; data: UpdatePageRequest }) => pagesApi.updatePage(id, data),
     {
-      keepPreviousData: true,
+      onSuccess: () => {
+        queryClient.invalidateQueries(['pages']);
+        toast.success('Page updated successfully');
+        setEditModalOpen(false);
+        setSelectedPage(null);
+      },
+      onError: (error: any) => {
+        toast.error(error.response?.data?.message || 'Failed to update page');
+      },
     }
   );
 
@@ -33,7 +66,7 @@ const PagesManagement: React.FC = () => {
       queryClient.invalidateQueries(['pages']);
       toast.success('Page deleted successfully');
       setDeleteDialogOpen(false);
-      setPageToDelete(null);
+      setSelectedPage(null);
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete page');
@@ -60,229 +93,298 @@ const PagesManagement: React.FC = () => {
     },
   });
 
-  const handleDeleteClick = (page: PageListItem) => {
-    setPageToDelete(page);
+  const handleEdit = (page: PageListItem) => {
+    setSelectedPage(page);
+    editForm.reset({
+      name: page.name,
+      title: page.title,
+      slug: page.slug,
+      status: page.status,
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleDelete = (page: PageListItem) => {
+    setSelectedPage(page);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (pageToDelete) {
-      deleteMutation.mutate(pageToDelete.id);
-    }
-  };
-
   const handlePublishToggle = (page: PageListItem) => {
-    if (page.status === 1) { // Published
+    if (page.status === PageStatus.Published) {
       unpublishMutation.mutate(page.id);
     } else {
       publishMutation.mutate(page.id);
     }
   };
 
-  const getStatusBadge = (status: number) => {
+  const onCreateSubmit = (data: CreatePageRequest) => {
+    createMutation.mutate(data);
+  };
+
+  const onEditSubmit = (data: UpdatePageRequest) => {
+    if (selectedPage) {
+      updateMutation.mutate({ id: selectedPage.id, data });
+    }
+  };
+
+  const getStatusBadge = (status: PageStatus) => {
     switch (status) {
-      case 1:
+      case PageStatus.Published:
         return <Badge variant="green">Published</Badge>;
-      case 0:
+      case PageStatus.Draft:
         return <Badge variant="yellow">Draft</Badge>;
-      case 2:
+      case PageStatus.Archived:
         return <Badge variant="gray">Archived</Badge>;
-      case 3:
+      case PageStatus.Scheduled:
         return <Badge variant="blue">Scheduled</Badge>;
       default:
         return <Badge variant="gray">Unknown</Badge>;
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900">Error loading pages</h3>
-          <p className="text-gray-500">Please try again later.</p>
+  const columns: Column<PageListItem>[] = [
+    {
+      header: 'Name',
+      accessor: 'name',
+      render: (value, item) => (
+        <div>
+          <div className="font-medium text-gray-900 dark:text-white">{value}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">/{item.slug}</div>
         </div>
-      </div>
-    );
-  }
+      ),
+    },
+    {
+      header: 'Title',
+      accessor: 'title',
+    },
+    {
+      header: 'Status',
+      accessor: 'status',
+      render: (value) => getStatusBadge(value),
+    },
+    {
+      header: 'Created',
+      accessor: 'createdAt',
+      render: (value) => new Date(value).toLocaleDateString(),
+    },
+    {
+      header: 'Updated',
+      accessor: 'updatedAt',
+      render: (value) => new Date(value).toLocaleDateString(),
+    },
+  ];
+
+  const actions = [
+    {
+      icon: EyeIcon,
+      label: 'View',
+      onClick: (page: PageListItem) => window.open(`/page/${page.slug}`, '_blank'),
+      variant: 'ghost' as const,
+    },
+    {
+      icon: PencilIcon,
+      label: 'Edit',
+      onClick: handleEdit,
+      variant: 'ghost' as const,
+    },
+    {
+      icon: page.status === PageStatus.Published ? EyeIcon : PlusIcon,
+      label: page.status === PageStatus.Published ? 'Unpublish' : 'Publish',
+      onClick: handlePublishToggle,
+      variant: 'ghost' as const,
+    },
+    {
+      icon: TrashIcon,
+      label: 'Delete',
+      onClick: handleDelete,
+      variant: 'danger' as const,
+    },
+  ];
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Pages</h1>
-          <p className="text-gray-600">Manage your website pages</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Pages</h1>
+          <p className="text-gray-600 dark:text-gray-400">Manage your website pages</p>
         </div>
-        <Link to="/dashboard/pages/create">
-          <Button leftIcon={<PlusIcon className="h-4 w-4" />}>
-            Create Page
-          </Button>
-        </Link>
+        <Button 
+          leftIcon={<PlusIcon className="h-4 w-4" />}
+          onClick={() => setCreateModalOpen(true)}
+        >
+          Create Page
+        </Button>
       </div>
 
+      {/* Search */}
       <Card>
-        <div className="p-6 space-y-6">
-          {/* Search */}
-          <div className="max-w-md">
-            <Input
-              placeholder="Search pages..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
-          {/* Pages Table */}
-          {pagesData?.items.length ? (
-            <div className="overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Page
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Updated
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {pagesData.items.map((page) => (
-                    <tr key={page.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{page.title}</div>
-                          <div className="text-sm text-gray-500">/{page.slug}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(page.status)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(page.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(page.updatedAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => window.open(`/page/${page.slug}`, '_blank')}
-                            leftIcon={<EyeIcon className="h-4 w-4" />}
-                          >
-                            View
-                          </Button>
-                          <Link to={`/dashboard/pages/${page.id}/edit`}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              leftIcon={<PencilIcon className="h-4 w-4" />}
-                            >
-                              Edit
-                            </Button>
-                          </Link>
-                          <Button
-                            variant={page.status === 1 ? 'secondary' : 'primary'}
-                            size="sm"
-                            onClick={() => handlePublishToggle(page)}
-                            loading={publishMutation.isLoading || unpublishMutation.isLoading}
-                          >
-                            {page.status === 1 ? 'Unpublish' : 'Publish'}
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDeleteClick(page)}
-                            leftIcon={<TrashIcon className="h-4 w-4" />}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900">No pages found</h3>
-              <p className="text-gray-500">Get started by creating your first page.</p>
-              <div className="mt-6">
-                <Link to="/dashboard/pages/create">
-                  <Button leftIcon={<PlusIcon className="h-4 w-4" />}>
-                    Create Page
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* Pagination */}
-          {pagesData && pagesData.totalCount > pageSize && (
-            <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-              <div className="flex items-center">
-                <p className="text-sm text-gray-700">
-                  Showing{' '}
-                  <span className="font-medium">
-                    {(currentPage - 1) * pageSize + 1}
-                  </span>{' '}
-                  to{' '}
-                  <span className="font-medium">
-                    {Math.min(currentPage * pageSize, pagesData.totalCount)}
-                  </span>{' '}
-                  of{' '}
-                  <span className="font-medium">{pagesData.totalCount}</span>{' '}
-                  results
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  disabled={currentPage * pageSize >= pagesData.totalCount}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+        <div className="p-4">
+          <Input
+            placeholder="Search pages..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-md"
+          />
         </div>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Pages Table */}
+      <Card padding="none">
+        <DataTable
+          data={pagesData?.items || []}
+          columns={columns}
+          actions={actions}
+          loading={isLoading}
+          emptyMessage="No pages found"
+        />
+      </Card>
+
+      {/* Pagination */}
+      {pagesData && pagesData.totalCount > pageSize && (
+        <div className="flex justify-center">
+          <nav className="flex space-x-2">
+            <Button
+              variant="outline"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              disabled={currentPage >= Math.ceil(pagesData.totalCount / pageSize)}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+            >
+              Next
+            </Button>
+          </nav>
+        </div>
+      )}
+
+      {/* Create Modal */}
+      <Modal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Create New Page"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={createForm.handleSubmit(onCreateSubmit)}
+              loading={createMutation.isLoading}
+            >
+              Create Page
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
+          <Input
+            label="Page Name"
+            {...createForm.register('name', { required: 'Page name is required' })}
+            error={createForm.formState.errors.name?.message}
+          />
+          <Input
+            label="Page Title"
+            {...createForm.register('title', { required: 'Page title is required' })}
+            error={createForm.formState.errors.title?.message}
+          />
+          <Input
+            label="Slug"
+            placeholder="page-url-slug"
+            {...createForm.register('slug', { 
+              required: 'Slug is required',
+              pattern: {
+                value: /^[a-z0-9-]+$/,
+                message: 'Slug must contain only lowercase letters, numbers, and hyphens'
+              }
+            })}
+            error={createForm.formState.errors.slug?.message}
+          />
+          <Input
+            label="Description"
+            {...createForm.register('description')}
+          />
+          <Input
+            label="Meta Title"
+            {...createForm.register('metaTitle')}
+          />
+          <Input
+            label="Meta Description"
+            {...createForm.register('metaDescription')}
+          />
+        </form>
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        title="Edit Page"
+        size="lg"
+        footer={
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setEditModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={editForm.handleSubmit(onEditSubmit)}
+              loading={updateMutation.isLoading}
+            >
+              Update Page
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-4">
+          <Input
+            label="Page Name"
+            {...editForm.register('name', { required: 'Page name is required' })}
+            error={editForm.formState.errors.name?.message}
+          />
+          <Input
+            label="Page Title"
+            {...editForm.register('title', { required: 'Page title is required' })}
+            error={editForm.formState.errors.title?.message}
+          />
+          <Input
+            label="Slug"
+            {...editForm.register('slug', { 
+              required: 'Slug is required',
+              pattern: {
+                value: /^[a-z0-9-]+$/,
+                message: 'Slug must contain only lowercase letters, numbers, and hyphens'
+              }
+            })}
+            error={editForm.formState.errors.slug?.message}
+          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Status
+            </label>
+            <select
+              {...editForm.register('status')}
+              className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            >
+              <option value={PageStatus.Draft}>Draft</option>
+              <option value={PageStatus.Published}>Published</option>
+              <option value={PageStatus.Archived}>Archived</option>
+              <option value={PageStatus.Scheduled}>Scheduled</option>
+            </select>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Delete Confirmation */}
       <ConfirmDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => selectedPage && deleteMutation.mutate(selectedPage.id)}
         title="Delete Page"
-        description={`Are you sure you want to delete "${pageToDelete?.title}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${selectedPage?.name}"? This action cannot be undone.`}
         confirmText="Delete"
         confirmButtonVariant="danger"
         loading={deleteMutation.isLoading}
