@@ -14,9 +14,18 @@ import {
   PlusIcon,
   ArrowTrendingUpIcon,
   ClockIcon,
-  CheckCircleIcon,
   MapPinIcon,
 } from '@heroicons/react/24/outline';
+
+interface StatItem {
+  name: string;
+  value: number;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  href: string;
+  color: string;
+  change: string;
+  changeType: 'positive' | 'negative' | 'neutral';
+}
 
 const Dashboard: React.FC = () => {
   const { data: pagesData } = useQuery('pages-summary', () => pagesApi.getPages(1, 5));
@@ -30,7 +39,7 @@ const Dashboard: React.FC = () => {
     { id: '3', title: 'Deploy v1.1.9', status: 'failed', type: 'deployment' },
   ];
 
-  const stats = [
+  const stats: StatItem[] = [
     {
       name: 'Total Pages',
       value: pagesData?.totalCount || 0,
@@ -38,7 +47,7 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/pages',
       color: 'bg-blue-500',
       change: '+12%',
-      changeType: 'positive' as const,
+      changeType: 'positive',
     },
     {
       name: 'Total Users',
@@ -47,7 +56,7 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/users',
       color: 'bg-green-500',
       change: '+3%',
-      changeType: 'positive' as const,
+      changeType: 'positive',
     },
     {
       name: 'Locations',
@@ -56,7 +65,7 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/company',
       color: 'bg-purple-500',
       change: '0%',
-      changeType: 'neutral' as const,
+      changeType: 'neutral',
     },
     {
       name: 'Active Jobs',
@@ -65,7 +74,7 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/jobs',
       color: 'bg-orange-500',
       change: '+1',
-      changeType: 'positive' as const,
+      changeType: 'positive',
     },
   ];
 

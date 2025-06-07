@@ -11,7 +11,7 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import { PlusIcon, PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, EyeIcon, DocumentCheckIcon } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
 const PagesManagement: React.FC = () => {
@@ -188,8 +188,8 @@ const PagesManagement: React.FC = () => {
       variant: 'ghost' as const,
     },
     {
-      icon: page.status === PageStatus.Published ? EyeIcon : PlusIcon,
-      label: page.status === PageStatus.Published ? 'Unpublish' : 'Publish',
+      icon: DocumentCheckIcon,
+      label: 'Toggle Publication',
       onClick: handlePublishToggle,
       variant: 'ghost' as const,
     },

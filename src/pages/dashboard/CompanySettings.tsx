@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { companyApi } from '../../services/api';
-import { Company, UpdateCompanyRequest, Location, CreateLocationRequest, UpdateLocationRequest } from '../../types/company';
+import { UpdateCompanyRequest, Location, CreateLocationRequest, UpdateLocationRequest } from '../../types/company';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
@@ -11,15 +11,13 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import Dropdown from '../../components/ui/Dropdown';
 import { 
   PlusIcon, 
   PencilIcon, 
   TrashIcon, 
   MapPinIcon,
   BuildingOfficeIcon,
-  StarIcon,
-  EllipsisVerticalIcon
+  StarIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
@@ -225,26 +223,26 @@ const CompanySettings: React.FC = () => {
     },
   ];
 
-  const getLocationActions = (location: Location) => [
+  const locationActions = [
     {
       icon: PencilIcon,
       label: 'Edit',
-      onClick: () => handleEditLocation(location),
+      onClick: (location: Location) => handleEditLocation(location),
       variant: 'ghost' as const,
     },
     {
       icon: StarIcon,
       label: 'Set as Main',
-      onClick: () => handleSetMainLocation(location),
+      onClick: (location: Location) => handleSetMainLocation(location),
       variant: 'ghost' as const,
-      show: () => !location.isMainLocation,
+      show: (location: Location) => !location.isMainLocation,
     },
     {
       icon: TrashIcon,
       label: 'Delete',
-      onClick: () => handleDeleteLocation(location),
+      onClick: (location: Location) => handleDeleteLocation(location),
       variant: 'danger' as const,
-      show: () => !location.isMainLocation, // Prevent deleting main location
+      show: (location: Location) => !location.isMainLocation, // Prevent deleting main location
     },
   ];
 
@@ -347,7 +345,7 @@ const CompanySettings: React.FC = () => {
           <DataTable
             data={locations || []}
             columns={locationColumns}
-            actions={getLocationActions}
+            actions={locationActions}
             loading={locationsLoading}
             emptyMessage="No locations found"
           />

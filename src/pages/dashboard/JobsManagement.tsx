@@ -10,7 +10,6 @@ import Modal from '../../components/ui/Modal';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { 
-  PlusIcon, 
   PlayIcon, 
   StopIcon, 
   ClockIcon,
@@ -41,20 +40,19 @@ interface Job {
 interface CreateDeploymentJobRequest {
   version: string;
   releaseNotes: string;
-  tenantId?: string; // Optional for global deployment
+  tenantId?: string;
   scheduledAt?: string;
 }
 
 interface CreateTemplateSyncJobRequest {
   masterTemplateVersion: string;
-  tenantId?: string; // Optional for global sync
+  tenantId?: string;
   scheduledAt?: string;
 }
 
 // Mock API functions (replace with real API calls)
 const jobsApi = {
   getJobs: async (): Promise<Job[]> => {
-    // Mock data
     return [
       {
         id: '1',
@@ -135,7 +133,7 @@ const JobsManagement: React.FC = () => {
       setCreateJobModalOpen(false);
       deploymentForm.reset();
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Failed to create deployment job');
     },
   });
@@ -147,7 +145,7 @@ const JobsManagement: React.FC = () => {
       setCreateJobModalOpen(false);
       templateSyncForm.reset();
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Failed to create template sync job');
     },
   });
@@ -159,7 +157,7 @@ const JobsManagement: React.FC = () => {
       setCancelDialogOpen(false);
       setSelectedJob(null);
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Failed to cancel job');
     },
   });
@@ -169,7 +167,7 @@ const JobsManagement: React.FC = () => {
       queryClient.invalidateQueries(['jobs']);
       toast.success('Job retry initiated');
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error('Failed to retry job');
     },
   });
@@ -308,29 +306,22 @@ const JobsManagement: React.FC = () => {
     },
   ];
 
-  const getJobActions = (job: Job) => {
-    const actions = [];
-
-    if (job.status === 'failed') {
-      actions.push({
-        icon: ArrowPathIcon,
-        label: 'Retry',
-        onClick: () => handleRetryJob(job),
-        variant: 'ghost' as const,
-      });
-    }
-
-    if (job.status === 'pending' || job.status === 'running') {
-      actions.push({
-        icon: StopIcon,
-        label: 'Cancel',
-        onClick: () => handleCancelJob(job),
-        variant: 'danger' as const,
-      });
-    }
-
-    return actions;
-  };
+  const jobActions = [
+    {
+      icon: ArrowPathIcon,
+      label: 'Retry',
+      onClick: (job: Job) => handleRetryJob(job),
+      variant: 'ghost' as const,
+      show: (job: Job) => job.status === 'failed',
+    },
+    {
+      icon: StopIcon,
+      label: 'Cancel',
+      onClick: (job: Job) => handleCancelJob(job),
+      variant: 'danger' as const,
+      show: (job: Job) => job.status === 'pending' || job.status === 'running',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -428,7 +419,7 @@ const JobsManagement: React.FC = () => {
         <DataTable
           data={jobs || []}
           columns={columns}
-          actions={getJobActions}
+          actions={jobActions}
           loading={isLoading}
           emptyMessage="No jobs found"
         />

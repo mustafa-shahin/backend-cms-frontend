@@ -15,10 +15,7 @@ import {
   PlusIcon, 
   PencilIcon, 
   TrashIcon, 
-  CheckCircleIcon, 
-  XCircleIcon,
-  LockClosedIcon,
-  LockOpenIcon 
+  CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -202,8 +199,8 @@ const UsersManagement: React.FC = () => {
       variant: 'ghost' as const,
     },
     {
-      icon: (user: UserListItem) => user.isActive ? XCircleIcon : CheckCircleIcon,
-      label: (user: UserListItem) => user.isActive ? 'Deactivate' : 'Activate',
+      icon: CheckCircleIcon,
+      label: 'Toggle Status',
       onClick: handleActivationToggle,
       variant: 'ghost' as const,
     },
