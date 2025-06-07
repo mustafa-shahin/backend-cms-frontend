@@ -27,14 +27,14 @@ class ApiService {
   private api: AxiosInstance;
 
   constructor() {
-    this.api = axios.create({
-      baseURL: BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Tenant-Id': 'default', // Default tenant for now
-      },
-    });
-
+  this.api = axios.create({
+    baseURL: BASE_URL,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Tenant-Id': 'default',
+    },
+  });
+  
     // Request interceptor to add auth token
     this.api.interceptors.request.use(
       (config) => {
@@ -83,10 +83,24 @@ class ApiService {
     return response.data;
   }
 
-  async register(userData: RegisterRequest): Promise<void> {
-    await this.api.post('/auth/register', userData);
+  // async register(userData: RegisterRequest): Promise<void> {
+  //   await this.api.post('/auth/register', userData);
+  // }
+async register(userData: RegisterRequest): Promise<void> {
+  console.log('=== FRONTEND REGISTER CALL ===');
+  console.log('API URL:', `${this.api.defaults.baseURL}/auth/register`);
+  console.log('User data:', userData);
+  
+  try {
+    const response = await this.api.post('/auth/register', userData);
+    console.log('Register response:', response.data);
+  } catch (error: any) {
+    console.error('Register error:', error.response?.data || error.message);
+    console.error('Error status:', error.response?.status);
+    console.error('Error headers:', error.response?.headers);
+    throw error;
   }
-
+}
   async logout(data: { refreshToken: string }): Promise<void> {
     await this.api.post('/auth/logout', data);
   }

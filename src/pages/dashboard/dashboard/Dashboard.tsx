@@ -1,14 +1,15 @@
 import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
-import { pagesApi, usersApi, companyApi } from '../../services/api';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
+import { pagesApi, usersApi, companyApi } from '../../../services/api';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
 import {
   DocumentTextIcon,
   UsersIcon,
   BuildingOfficeIcon,
   PlusIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
@@ -34,7 +35,7 @@ const Dashboard: React.FC = () => {
     {
       name: 'Locations',
       value: company?.locations?.length || 0,
-      icon: BuildingOfficeIcon,
+      icon: MapPinIcon,
       href: '/dashboard/locations',
       color: 'bg-purple-500',
     },
@@ -107,7 +108,7 @@ const Dashboard: React.FC = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Pages</h3>
             {pagesData?.items.length ? (
               <div className="space-y-3">
-                {pagesData.items.slice(0, 5).map((page) => (
+                {pagesData.items.slice(0, 5).map((page: any) => (
                   <div key={page.id} className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-gray-900">{page.title}</p>

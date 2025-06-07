@@ -26,6 +26,39 @@ interface NavigationItem {
   count?: number;
 }
 
+const navigation: NavigationItem[] = [
+  { 
+    name: 'Dashboard', 
+    href: '/dashboard', 
+    icon: HomeIcon, 
+    iconSolid: HomeIconSolid 
+  },
+  { 
+    name: 'Pages', 
+    href: '/dashboard/pages', 
+    icon: DocumentTextIcon, 
+    iconSolid: DocumentTextIconSolid 
+  },
+  { 
+    name: 'Users', 
+    href: '/dashboard/users', 
+    icon: UsersIcon, 
+    iconSolid: UsersIconSolid 
+  },
+  { 
+    name: 'Company', 
+    href: '/dashboard/company', 
+    icon: BuildingOfficeIcon, 
+    iconSolid: BuildingOfficeIconSolid 
+  },
+  { 
+    name: 'Locations', 
+    href: '/dashboard/locations', 
+    icon: MapPinIcon, 
+    iconSolid: MapPinIconSolid 
+  },
+];
+
 const Sidebar: React.FC = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -136,36 +169,4 @@ const Sidebar: React.FC = () => {
   );
 };
 
-export default Sidebar; navigation: NavigationItem[] = [
-  { 
-    name: 'Dashboard', 
-    href: '/dashboard', 
-    icon: HomeIcon, 
-    iconSolid: HomeIconSolid 
-  },
-  { 
-    name: 'Pages', 
-    href: '/dashboard/pages', 
-    icon: DocumentTextIcon, 
-    iconSolid: DocumentTextIconSolid 
-  },
-  { 
-    name: 'Users', 
-    href: '/dashboard/users', 
-    icon: UsersIcon, 
-    iconSolid: UsersIconSolid 
-  },
-  { 
-    name: 'Company', 
-    href: '/dashboard/company', 
-    icon: BuildingOfficeIcon, 
-    iconSolid: BuildingOfficeIconSolid 
-  },
-  { 
-    name: 'Locations', 
-    href: '/dashboard/locations', 
-    icon: MapPinIcon, 
-    iconSolid: MapPinIconSolid 
-  },
-];
-
+export default Sidebar;
