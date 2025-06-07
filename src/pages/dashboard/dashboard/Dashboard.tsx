@@ -1,20 +1,21 @@
-// src/pages/dashboard/Dashboard.tsx
+// src/pages/dashboard/dashboard/Dashboard.tsx
 import React from 'react';
 import { useQuery } from 'react-query';
 import { Link } from 'react-router-dom';
-import { pagesApi, usersApi, companyApi } from '../../services/api';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
+import { pagesApi, usersApi, companyApi } from '../../../services/api';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/ui/Button';
+import Badge from '../../../components/ui/Badge';
 import {
   DocumentTextIcon,
   UsersIcon,
   BuildingOfficeIcon,
   BriefcaseIcon,
   PlusIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   ClockIcon,
   CheckCircleIcon,
+  MapPinIcon,
 } from '@heroicons/react/24/outline';
 
 const Dashboard: React.FC = () => {
@@ -37,7 +38,7 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/pages',
       color: 'bg-blue-500',
       change: '+12%',
-      changeType: 'positive',
+      changeType: 'positive' as const,
     },
     {
       name: 'Total Users',
@@ -46,16 +47,16 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/users',
       color: 'bg-green-500',
       change: '+3%',
-      changeType: 'positive',
+      changeType: 'positive' as const,
     },
     {
       name: 'Locations',
       value: company?.locations?.length || 0,
-      icon: BuildingOfficeIcon,
+      icon: MapPinIcon,
       href: '/dashboard/company',
       color: 'bg-purple-500',
       change: '0%',
-      changeType: 'neutral',
+      changeType: 'neutral' as const,
     },
     {
       name: 'Active Jobs',
@@ -64,7 +65,7 @@ const Dashboard: React.FC = () => {
       href: '/dashboard/jobs',
       color: 'bg-orange-500',
       change: '+1',
-      changeType: 'positive',
+      changeType: 'positive' as const,
     },
   ];
 
@@ -121,7 +122,7 @@ const Dashboard: React.FC = () => {
                           : 'text-gray-500 dark:text-gray-400'
                       }`}>
                         {stat.changeType === 'positive' && (
-                          <TrendingUpIcon className="self-center flex-shrink-0 h-3 w-3" />
+                          <ArrowTrendingUpIcon className="self-center flex-shrink-0 h-3 w-3" />
                         )}
                         <span className="sr-only">
                           {stat.changeType === 'positive' ? 'Increased' : 'Decreased'} by
@@ -172,3 +173,161 @@ const Dashboard: React.FC = () => {
               <Link to="/dashboard/company" className="block">
                 <Button 
                   className="w-full justify-start"
+                  variant="outline" 
+                  leftIcon={<BuildingOfficeIcon className="h-4 w-4" />}
+                >
+                  Manage Company
+                </Button>
+              </Link>
+              <Link to="/dashboard/jobs" className="block">
+                <Button 
+                  className="w-full justify-start"
+                  variant="outline" 
+                  leftIcon={<BriefcaseIcon className="h-4 w-4" />}
+                >
+                  View Jobs
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+
+        {/* Recent Pages */}
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Pages</h3>
+            {recentPages.length ? (
+              <div className="space-y-3">
+                {recentPages.slice(0, 5).map((page: any) => (
+                  <div key={page.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{page.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">/{page.slug}</p>
+                    </div>
+                    <Link to={`/dashboard/pages/${page.id}/edit`}>
+                      <Button variant="ghost" size="sm">
+                        Edit
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No pages created yet.</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Recent Users */}
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Users</h3>
+            {recentUsers.length ? (
+              <div className="space-y-3">
+                {recentUsers.slice(0, 5).map((user: any) => (
+                  <div key={user.id} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {user.isActive ? (
+                        <Badge variant="green" size="sm">Active</Badge>
+                      ) : (
+                        <Badge variant="gray" size="sm">Inactive</Badge>
+                      )}
+                      <Link to={`/dashboard/users/${user.id}/edit`}>
+                        <Button variant="ghost" size="sm">
+                          Edit
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No users found.</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Recent Jobs */}
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Recent Jobs</h3>
+            {mockJobs.length ? (
+              <div className="space-y-3">
+                {mockJobs.map((job) => (
+                  <div key={job.id} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex-shrink-0">
+                        {job.type === 'deployment' ? (
+                          <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                            <BriefcaseIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                          </div>
+                        ) : (
+                          <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                            <ClockIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{job.title}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {job.type.replace('-', ' ')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {getJobStatusBadge(job.status)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">No recent jobs.</p>
+            )}
+            <div className="mt-4">
+              <Link to="/dashboard/jobs">
+                <Button variant="outline" size="sm" className="w-full">
+                  View All Jobs
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* System Overview */}
+      <Card>
+        <div className="p-6">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">System Overview</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {stats.find(s => s.name === 'Total Pages')?.value || 0}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Total Pages</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                {stats.find(s => s.name === 'Total Users')?.value || 0}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Active Users</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                {company?.locations?.length || 0}
+              </div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Company Locations</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+};
+
+export default Dashboard;

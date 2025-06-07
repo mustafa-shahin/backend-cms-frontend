@@ -1,7 +1,6 @@
 // src/components/ui/DataTable.tsx
 import React, { ReactNode } from 'react';
 import Button from './Button';
-import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 
 export interface Column<T> {
   header: string;
@@ -43,6 +42,27 @@ const DataTable = <T extends { id: string | number }>({
       return column.accessor(item);
     }
     return item[column.accessor];
+  };
+
+  const renderCellContent = (value: any, item: T, column: Column<T>) => {
+    if (column.render) {
+      return column.render(value, item);
+    }
+    
+    // Handle different value types for display
+    if (value === null || value === undefined) {
+      return '-';
+    }
+    
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+    
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+    
+    return String(value);
   };
 
   if (loading) {
@@ -98,7 +118,7 @@ const DataTable = <T extends { id: string | number }>({
                       key={colIndex}
                       className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 ${column.className || ''}`}
                     >
-                      {column.render ? column.render(value, item) : value}
+                      {renderCellContent(value, item, column)}
                     </td>
                   );
                 })}
