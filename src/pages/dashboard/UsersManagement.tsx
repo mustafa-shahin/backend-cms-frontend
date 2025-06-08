@@ -164,19 +164,15 @@ const UsersManagement: React.FC = () => {
         </div>
       ),
     },
-    {
-      header: 'Roles',
-      accessor: 'roleNames',
-      render: (value) => (
-        <div className="flex flex-wrap gap-1">
-          {value.map((role: string) => (
-            <Badge key={role} variant="blue" size="sm">
-              {role}
-            </Badge>
-          ))}
-        </div>
-      ),
-    },
+{
+  header: 'Role',
+  accessor: 'role',
+  render: (value: string) => (
+    <Badge variant="blue" size="sm">
+      {value}
+    </Badge>
+  ),
+},
     {
       header: 'Last Login',
       accessor: 'lastLoginAt',

@@ -8,7 +8,7 @@ export interface UserListItem {
   isLocked: boolean;
   lastLoginAt?: string;
   createdAt: string;
-  roleNames: string[];
+   role: string;
 }
 
 export interface CreateUserRequest {
@@ -21,7 +21,7 @@ export interface CreateUserRequest {
   avatar?: string;
   timezone?: string;
   language?: string;
-  roleIds?: string[];
+   role: string;
   preferences?: Record<string, any>;
 }
 
@@ -34,6 +34,6 @@ export interface UpdateUserRequest {
   avatar?: string;
   timezone?: string;
   language?: string;
-  roleIds?: string[];
+  role: string;
   preferences?: Record<string, any>;
 }
