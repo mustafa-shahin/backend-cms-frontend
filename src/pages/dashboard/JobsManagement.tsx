@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
+import { useAuth } from '../../contexts/AuthContext';
+import { UserRole } from '../../types/auth';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
@@ -17,7 +19,8 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   RocketLaunchIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ShieldExclamationIcon
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 
@@ -119,7 +122,11 @@ const JobsManagement: React.FC = () => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
+  const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
+
+  // Check if current user is a developer
+  const isDeveloper = currentUser?.role === UserRole.Dev;
 
   const { data: jobs, isLoading } = useQuery('jobs', jobsApi.getJobs);
 
@@ -173,6 +180,10 @@ const JobsManagement: React.FC = () => {
   });
 
   const handleCreateJob = (type: 'deployment' | 'template-sync') => {
+    if (!isDeveloper) {
+      toast.error('Only developers can create deployment and template sync jobs');
+      return;
+    }
     setJobType(type);
     setCreateJobModalOpen(true);
   };
@@ -183,6 +194,10 @@ const JobsManagement: React.FC = () => {
   };
 
   const handleRetryJob = (job: Job) => {
+    if (!isDeveloper) {
+      toast.error('Only developers can retry deployment and template sync jobs');
+      return;
+    }
     retryJobMutation.mutate(job.id);
   };
 
@@ -312,16 +327,130 @@ const JobsManagement: React.FC = () => {
       label: 'Retry',
       onClick: (job: Job) => handleRetryJob(job),
       variant: 'ghost' as const,
-      show: (job: Job) => job.status === 'failed',
+      show: (job: Job) => job.status === 'failed' && isDeveloper,
     },
     {
       icon: StopIcon,
       label: 'Cancel',
       onClick: (job: Job) => handleCancelJob(job),
       variant: 'danger' as const,
-      show: (job: Job) => job.status === 'pending' || job.status === 'running',
+      show: (job: Job) => (job.status === 'pending' || job.status === 'running') && isDeveloper,
     },
   ];
+
+  // If user is not a developer, show restricted access message
+  if (!isDeveloper) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Job Management</h1>
+            <p className="text-gray-600 dark:text-gray-400">View deployment and template sync jobs</p>
+          </div>
+        </div>
+
+        {/* Access Restriction Notice */}
+        <Card>
+          <div className="p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <ShieldExclamationIcon className="h-12 w-12 text-yellow-400" />
+              </div>
+              <div className="ml-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Developer Access Required
+                </h3>
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <p>
+                    Creating deployments and template sync jobs is restricted to developers only. 
+                    You can view existing jobs but cannot create new ones or manage job execution.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Job Statistics - View Only */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Jobs</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {jobs?.length || 0}
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+                  <RocketLaunchIcon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Running</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {jobs?.filter(job => job.status === 'running').length || 0}
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                  <PlayIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {jobs?.filter(job => job.status === 'completed').length || 0}
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                  <CheckCircleIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Failed</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {jobs?.filter(job => job.status === 'failed').length || 0}
+                  </p>
+                </div>
+                <div className="h-12 w-12 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                  <XCircleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Jobs Table - View Only */}
+        <Card padding="none">
+          <DataTable
+            data={jobs || []}
+            columns={columns}
+            actions={[]} // No actions for non-developers
+            loading={isLoading}
+            emptyMessage="No jobs found"
+          />
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

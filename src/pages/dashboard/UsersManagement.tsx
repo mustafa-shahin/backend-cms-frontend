@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';
 import { usersApi } from '../../services/api';
 import { UserListItem, CreateUserRequest, UpdateUserRequest } from '../../types/user';
+import { UserRole } from '../../types/auth';
+import { useAuth } from '../../contexts/AuthContext';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
@@ -27,6 +29,7 @@ const UsersManagement: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
 
+  const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
   const pageSize = 10;
 
@@ -52,7 +55,7 @@ const UsersManagement: React.FC = () => {
   });
 
   const updateMutation = useMutation(
-    ({ id, data }: { id: string; data: UpdateUserRequest }) => usersApi.updateUser(id, data),
+    ({ id, data }: { id: number; data: UpdateUserRequest }) => usersApi.updateUser(id, data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['users']);
@@ -98,6 +101,52 @@ const UsersManagement: React.FC = () => {
     },
   });
 
+  // Check if current user can edit roles
+  const canEditRoles = currentUser?.role === UserRole.Admin || currentUser?.role === UserRole.Dev;
+  
+  // Get available roles based on current user's role
+  const getAvailableRoles = () => {
+    if (currentUser?.role === UserRole.Dev) {
+      return [
+        { value: UserRole.Customer, label: 'Customer' },
+        { value: UserRole.Admin, label: 'Admin' },
+        { value: UserRole.Dev, label: 'Developer' }
+      ];
+    } else if (currentUser?.role === UserRole.Admin) {
+      return [
+        { value: UserRole.Customer, label: 'Customer' },
+        { value: UserRole.Admin, label: 'Admin' }
+      ];
+    }
+    return [];
+  };
+
+  const getRoleBadgeVariant = (role: UserRole) => {
+    switch (role) {
+      case UserRole.Dev:
+        return 'purple';
+      case UserRole.Admin:
+        return 'blue';
+      case UserRole.Customer:
+        return 'green';
+      default:
+        return 'gray';
+    }
+  };
+
+  const getRoleDisplayName = (role: UserRole) => {
+    switch (role) {
+      case UserRole.Dev:
+        return 'Developer';
+      case UserRole.Admin:
+        return 'Admin';
+      case UserRole.Customer:
+        return 'Customer';
+      default:
+        return 'Unknown';
+    }
+  };
+
   const handleEdit = (user: UserListItem) => {
     setSelectedUser(user);
     editForm.reset({
@@ -106,6 +155,7 @@ const UsersManagement: React.FC = () => {
       firstName: user.firstName,
       lastName: user.lastName,
       isActive: user.isActive,
+      role: user.role,
     });
     setEditModalOpen(true);
   };
@@ -141,6 +191,11 @@ const UsersManagement: React.FC = () => {
         <div>
           <div className="font-medium text-gray-900 dark:text-white">
             {item.firstName} {item.lastName}
+            {item.role === UserRole.Dev && (
+              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                DEV
+              </span>
+            )}
           </div>
           <div className="text-sm text-gray-500 dark:text-gray-400">{item.email}</div>
         </div>
@@ -164,15 +219,15 @@ const UsersManagement: React.FC = () => {
         </div>
       ),
     },
-{
-  header: 'Role',
-  accessor: 'role',
-  render: (value: string) => (
-    <Badge variant="blue" size="sm">
-      {value}
-    </Badge>
-  ),
-},
+    {
+      header: 'Role',
+      accessor: 'role',
+      render: (value: UserRole) => (
+        <Badge variant={getRoleBadgeVariant(value)} size="sm">
+          {getRoleDisplayName(value)}
+        </Badge>
+      ),
+    },
     {
       header: 'Last Login',
       accessor: 'lastLoginAt',
@@ -330,11 +385,35 @@ const UsersManagement: React.FC = () => {
             })}
             error={createForm.formState.errors.password?.message}
           />
+          
+          {canEditRoles && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Role
+              </label>
+              <select
+                {...createForm.register('role', { required: 'Role is required' })}
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              >
+                <option value="">Select a role</option>
+                {getAvailableRoles().map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+              {createForm.formState.errors.role && (
+                <p className="mt-1 text-sm text-red-600">{createForm.formState.errors.role.message}</p>
+              )}
+            </div>
+          )}
+          
           <div className="flex items-center">
             <input
               type="checkbox"
               id="isActive"
               {...createForm.register('isActive')}
+              defaultChecked
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
             <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-white">
@@ -394,6 +473,28 @@ const UsersManagement: React.FC = () => {
             {...editForm.register('username', { required: 'Username is required' })}
             error={editForm.formState.errors.username?.message}
           />
+          
+          {canEditRoles && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Role
+              </label>
+              <select
+                {...editForm.register('role', { required: 'Role is required' })}
+                className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              >
+                {getAvailableRoles().map((role) => (
+                  <option key={role.value} value={role.value}>
+                    {role.label}
+                  </option>
+                ))}
+              </select>
+              {editForm.formState.errors.role && (
+                <p className="mt-1 text-sm text-red-600">{editForm.formState.errors.role.message}</p>
+              )}
+            </div>
+          )}
+          
           <div className="flex items-center">
             <input
               type="checkbox"

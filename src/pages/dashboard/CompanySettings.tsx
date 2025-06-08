@@ -63,7 +63,7 @@ const CompanySettings: React.FC = () => {
   });
 
   const updateLocationMutation = useMutation(
-    ({ id, data }: { id: string; data: UpdateLocationRequest }) => companyApi.updateLocation(id, data),
+    ({ id, data }: { id: number; data: UpdateLocationRequest }) => companyApi.updateLocation(id, data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['locations']);

@@ -47,7 +47,7 @@ const PagesManagement: React.FC = () => {
   });
 
   const updateMutation = useMutation(
-    ({ id, data }: { id: string; data: UpdatePageRequest }) => pagesApi.updatePage(id, data),
+    ({ id, data }: { id: number; data: UpdatePageRequest }) => pagesApi.updatePage(id, data),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['pages']);

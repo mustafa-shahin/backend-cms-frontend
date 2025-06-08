@@ -1,148 +1,123 @@
-// src/types/company.ts
-export interface Company {
-  id: number; // Changed from string to number
-  name: string;
-  description?: string;
-  website?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
-  logo?: string;
-  favicon?: string;
-  brandingSettings: Record<string, any>;
-  socialMediaLinks: Record<string, any>;
-  contactInfo: Record<string, any>;
-  businessSettings: Record<string, any>;
-  isActive: boolean;
-  timezone?: string;
-  currency?: string;
-  language?: string;
-  createdAt: string;
-  updatedAt: string;
-  locations: Location[];
+// src/types/page.ts
+export enum PageStatus {
+  Draft = 'draft',
+  Published = 'published',
+  Archived = 'archived',
+  Scheduled = 'scheduled',
 }
 
-export interface UpdateCompanyRequest {
+export interface PageComponent {
+  id: number;
   name: string;
-  description?: string;
-  website?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  postalCode?: string;
-  logo?: string;
-  favicon?: string;
-  brandingSettings?: Record<string, any>;
-  socialMediaLinks?: Record<string, any>;
-  contactInfo?: Record<string, any>;
-  businessSettings?: Record<string, any>;
-  timezone?: string;
-  currency?: string;
-  language?: string;
-}
-
-export interface Location {
-  id: number; // Changed from string to number
-  name: string;
-  description?: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-  latitude?: number;
-  longitude?: number;
-  phone?: string;
-  email?: string;
-  website?: string;
-  isMainLocation: boolean;
-  isActive: boolean;
-  openingHours: OpeningHour[];
-  additionalInfo: Record<string, any>;
+  type: string;
+  order: number;
+  settings: Record<string, any>;
+  content: Record<string, any>;
+  isVisible: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface OpeningHour {
-  id: number; // Changed from string to number
-  dayOfWeek: DayOfWeek;
-  openTime: string;
-  closeTime: string;
-  isClosed: boolean;
-  isOpen24Hours: boolean;
-  notes?: string;
-}
-
-export interface CreateLocationRequest {
+export interface Page {
+  id: number;
   name: string;
+  title: string;
+  slug: string;
   description?: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-  latitude?: number;
-  longitude?: number;
-  phone?: string;
-  email?: string;
-  website?: string;
-  isMainLocation?: boolean;
-  isActive?: boolean;
-  openingHours?: CreateOpeningHourRequest[];
-  additionalInfo?: Record<string, any>;
+  content?: string;
+  status: PageStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+  featuredImage?: string;
+  author: string;
+  isTemplate: boolean;
+  templateId?: string;
+  parentPageId?: string;
+  order: number;
+  settings: Record<string, any>;
+  seoSettings: Record<string, any>;
+  customFields: Record<string, any>;
+  components: PageComponent[];
+  createdAt: string;
+  updatedAt: string;
+  publishedBy?: string;
+  lastModifiedBy: string;
 }
 
-export interface UpdateLocationRequest {
+export interface PageListItem {
+  id: number;
   name: string;
+  title: string;
+  slug: string;
   description?: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  postalCode: string;
-  latitude?: number;
-  longitude?: number;
-  phone?: string;
-  email?: string;
-  website?: string;
-  isMainLocation: boolean;
-  isActive: boolean;
-  openingHours?: UpdateOpeningHourRequest[];
-  additionalInfo?: Record<string, any>;
+  status: PageStatus;
+  publishedAt?: string;
+  scheduledAt?: string;
+  author: string;
+  isTemplate: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+  lastModifiedBy: string;
 }
 
-export interface CreateOpeningHourRequest {
-  dayOfWeek: DayOfWeek;
-  openTime: string;
-  closeTime: string;
-  isClosed?: boolean;
-  isOpen24Hours?: boolean;
-  notes?: string;
+export interface CreatePageRequest {
+  name: string;
+  title: string;
+  slug: string;
+  description?: string;
+  content?: string;
+  status?: PageStatus;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+  featuredImage?: string;
+  isTemplate?: boolean;
+  templateId?: string;
+  parentPageId?: string;
+  order?: number;
+  settings?: Record<string, any>;
+  seoSettings?: Record<string, any>;
+  customFields?: Record<string, any>;
+  scheduledAt?: string;
 }
 
-export interface UpdateOpeningHourRequest {
-  id?: number; // Changed from string to number
-  dayOfWeek: DayOfWeek;
-  openTime: string;
-  closeTime: string;
-  isClosed: boolean;
-  isOpen24Hours: boolean;
-  notes?: string;
+export interface UpdatePageRequest {
+  name: string;
+  title: string;
+  slug: string;
+  description?: string;
+  content?: string;
+  status: PageStatus;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+  featuredImage?: string;
+  isTemplate?: boolean;
+  templateId?: string;
+  parentPageId?: string;
+  order?: number;
+  settings?: Record<string, any>;
+  seoSettings?: Record<string, any>;
+  customFields?: Record<string, any>;
+  scheduledAt?: string;
 }
 
-export enum DayOfWeek {
-  Sunday = 0,
-  Monday = 1,
-  Tuesday = 2,
-  Wednesday = 3,
-  Thursday = 4,
-  Friday = 5,
-  Saturday = 6,
+export interface PageSearchFilters {
+  status?: PageStatus[];
+  author?: string;
+  isTemplate?: boolean;
+  parentPageId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface PageValidation {
+  isSlugValid: boolean;
+  isTitleValid: boolean;
+  errors: string[];
+  warnings: string[];
 }

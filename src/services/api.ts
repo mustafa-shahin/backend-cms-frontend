@@ -127,7 +127,7 @@ async register(userData: RegisterRequest): Promise<void> {
     return response.data;
   }
 
-  async getPage(id: string): Promise<Page> {
+  async getPage(id: number): Promise<Page> {
     const response: AxiosResponse<Page> = await this.api.get(`/pages/${id}`);
     return response.data;
   }
@@ -142,21 +142,21 @@ async register(userData: RegisterRequest): Promise<void> {
     return response.data;
   }
 
-  async updatePage(id: string, data: UpdatePageRequest): Promise<Page> {
+  async updatePage(id: number, data: UpdatePageRequest): Promise<Page> {
     const response: AxiosResponse<Page> = await this.api.put(`/pages/${id}`, data);
     return response.data;
   }
 
-  async deletePage(id: string): Promise<void> {
+  async deletePage(id: number): Promise<void> {
     await this.api.delete(`/pages/${id}`);
   }
 
-  async publishPage(id: string): Promise<Page> {
+  async publishPage(id: number): Promise<Page> {
     const response: AxiosResponse<Page> = await this.api.post(`/pages/${id}/publish`);
     return response.data;
   }
 
-  async unpublishPage(id: string): Promise<Page> {
+  async unpublishPage(id: number): Promise<Page> {
     const response: AxiosResponse<Page> = await this.api.post(`/pages/${id}/unpublish`);
     return response.data;
   }
@@ -186,7 +186,7 @@ async register(userData: RegisterRequest): Promise<void> {
     return response.data;
   }
 
-  async getUser(id: string): Promise<User> {
+  async getUser(id: number): Promise<User> {
     const response: AxiosResponse<User> = await this.api.get(`/users/${id}`);
     return response.data;
   }
@@ -196,20 +196,20 @@ async register(userData: RegisterRequest): Promise<void> {
     return response.data;
   }
 
-  async updateUser(id: string, data: UpdateUserRequest): Promise<User> {
+  async updateUser(id: number, data: UpdateUserRequest): Promise<User> {
     const response: AxiosResponse<User> = await this.api.put(`/users/${id}`, data);
     return response.data;
   }
 
-  async deleteUser(id: string): Promise<void> {
+  async deleteUser(id: number): Promise<void> {
     await this.api.delete(`/users/${id}`);
   }
 
-  async activateUser(id: string): Promise<void> {
+  async activateUser(id: number): Promise<void> {
     await this.api.post(`/users/${id}/activate`);
   }
 
-  async deactivateUser(id: string): Promise<void> {
+  async deactivateUser(id: number): Promise<void> {
     await this.api.post(`/users/${id}/deactivate`);
   }
 
@@ -230,7 +230,7 @@ async register(userData: RegisterRequest): Promise<void> {
     return response.data;
   }
 
-  async getLocation(id: string): Promise<Location> {
+  async getLocation(id: number): Promise<Location> {
     const response: AxiosResponse<Location> = await this.api.get(`/company/locations/${id}`);
     return response.data;
   }
@@ -240,16 +240,16 @@ async register(userData: RegisterRequest): Promise<void> {
     return response.data;
   }
 
-  async updateLocation(id: string, data: UpdateLocationRequest): Promise<Location> {
+  async updateLocation(id: number, data: UpdateLocationRequest): Promise<Location> {
     const response: AxiosResponse<Location> = await this.api.put(`/company/locations/${id}`, data);
     return response.data;
   }
 
-  async deleteLocation(id: string): Promise<void> {
+  async deleteLocation(id: number): Promise<void> {
     await this.api.delete(`/company/locations/${id}`);
   }
 
-  async setMainLocation(id: string): Promise<void> {
+  async setMainLocation(id: number): Promise<void> {
     await this.api.post(`/company/locations/${id}/set-main`);
   }
 }
@@ -267,35 +267,35 @@ export const authApi = {
 
 export const pagesApi = {
   getPages: (page?: number, pageSize?: number, search?: string) => apiService.getPages(page, pageSize, search),
-  getPage: (id: string) => apiService.getPage(id),
+  getPage: (id: number) => apiService.getPage(id),
   getPageBySlug: (slug: string) => apiService.getPageBySlug(slug),
   createPage: (data: CreatePageRequest) => apiService.createPage(data),
-  updatePage: (id: string, data: UpdatePageRequest) => apiService.updatePage(id, data),
-  deletePage: (id: string) => apiService.deletePage(id),
-  publishPage: (id: string) => apiService.publishPage(id),
-  unpublishPage: (id: string) => apiService.unpublishPage(id),
+  updatePage: (id: number, data: UpdatePageRequest) => apiService.updatePage(id, data),
+  deletePage: (id: number) => apiService.deletePage(id),
+  publishPage: (id: number) => apiService.publishPage(id),
+  unpublishPage: (id: number) => apiService.unpublishPage(id),
   validateSlug: (slug: string, excludePageId?: string) => apiService.validateSlug(slug, excludePageId),
 };
 
 export const usersApi = {
   getUsers: (page?: number, pageSize?: number, search?: string) => apiService.getUsers(page, pageSize, search),
-  getUser: (id: string) => apiService.getUser(id),
+  getUser: (id: number) => apiService.getUser(id),
   createUser: (data: CreateUserRequest) => apiService.createUser(data),
-  updateUser: (id: string, data: UpdateUserRequest) => apiService.updateUser(id, data),
-  deleteUser: (id: string) => apiService.deleteUser(id),
-  activateUser: (id: string) => apiService.activateUser(id),
-  deactivateUser: (id: string) => apiService.deactivateUser(id),
+  updateUser: (id: number, data: UpdateUserRequest) => apiService.updateUser(id, data),
+  deleteUser: (id: number) => apiService.deleteUser(id),
+  activateUser: (id: number) => apiService.activateUser(id),
+  deactivateUser: (id: number) => apiService.deactivateUser(id),
 };
 
 export const companyApi = {
   getCompany: () => apiService.getCompany(),
   updateCompany: (data: UpdateCompanyRequest) => apiService.updateCompany(data),
   getLocations: () => apiService.getLocations(),
-  getLocation: (id: string) => apiService.getLocation(id),
+  getLocation: (id: number) => apiService.getLocation(id),
   createLocation: (data: CreateLocationRequest) => apiService.createLocation(data),
-  updateLocation: (id: string, data: UpdateLocationRequest) => apiService.updateLocation(id, data),
-  deleteLocation: (id: string) => apiService.deleteLocation(id),
-  setMainLocation: (id: string) => apiService.setMainLocation(id),
+  updateLocation: (id: number, data: UpdateLocationRequest) => apiService.updateLocation(id, data),
+  deleteLocation: (id: number) => apiService.deleteLocation(id),
+  setMainLocation: (id: number) => apiService.setMainLocation(id),
 };
 
 export default apiService;

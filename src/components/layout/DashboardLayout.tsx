@@ -36,7 +36,7 @@ const DashboardLayout: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-72">
+      <div className="lg:pl-72 dark:bg-gray-900">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="py-6">
