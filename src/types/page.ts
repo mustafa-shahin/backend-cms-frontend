@@ -1,109 +1,148 @@
-export interface Page {
-  id: string;
+// src/types/company.ts
+export interface Company {
+  id: number; // Changed from string to number
   name: string;
-  title: string;
-  slug: string;
   description?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string;
-  status: PageStatus;
-  template?: string;
-  priority?: number;
-  parentPageId?: string;
-  publishedOn?: string;
-  publishedBy?: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  logo?: string;
+  favicon?: string;
+  brandingSettings: Record<string, any>;
+  socialMediaLinks: Record<string, any>;
+  contactInfo: Record<string, any>;
+  businessSettings: Record<string, any>;
+  isActive: boolean;
+  timezone?: string;
+  currency?: string;
+  language?: string;
   createdAt: string;
   updatedAt: string;
-  components: PageComponent[];
-  childPages: Page[];
+  locations: Location[];
 }
 
-export interface PageListItem {
-  id: string;
+export interface UpdateCompanyRequest {
   name: string;
-  title: string;
-  slug: string;
-  status: PageStatus;
+  description?: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  logo?: string;
+  favicon?: string;
+  brandingSettings?: Record<string, any>;
+  socialMediaLinks?: Record<string, any>;
+  contactInfo?: Record<string, any>;
+  businessSettings?: Record<string, any>;
+  timezone?: string;
+  currency?: string;
+  language?: string;
+}
+
+export interface Location {
+  id: number; // Changed from string to number
+  name: string;
+  description?: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  isMainLocation: boolean;
+  isActive: boolean;
+  openingHours: OpeningHour[];
+  additionalInfo: Record<string, any>;
   createdAt: string;
   updatedAt: string;
-  publishedOn?: string;
-  hasChildren: boolean;
 }
 
-export interface PageComponent {
-  id: string;
-  type: ComponentType;
-  name: string;
-  properties: Record<string, any>;
-  styles: Record<string, any>;
-  content: Record<string, any>;
-  order: number;
-  parentComponentId?: string;
-  childComponents: PageComponent[];
-  isVisible: boolean;
-  cssClasses?: string;
-  customCss?: string;
-  responsiveSettings: Record<string, any>;
-  animationSettings: Record<string, any>;
-  interactionSettings: Record<string, any>;
+export interface OpeningHour {
+  id: number; // Changed from string to number
+  dayOfWeek: DayOfWeek;
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
+  isOpen24Hours: boolean;
+  notes?: string;
 }
 
-export interface CreatePageRequest {
+export interface CreateLocationRequest {
   name: string;
-  title: string;
-  slug: string;
   description?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string;
-  status?: PageStatus;
-  template?: string;
-  priority?: number;
-  parentPageId?: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  isMainLocation?: boolean;
+  isActive?: boolean;
+  openingHours?: CreateOpeningHourRequest[];
+  additionalInfo?: Record<string, any>;
 }
 
-export interface UpdatePageRequest {
+export interface UpdateLocationRequest {
   name: string;
-  title: string;
-  slug: string;
   description?: string;
-  metaTitle?: string;
-  metaDescription?: string;
-  metaKeywords?: string;
-  status: PageStatus;
-  template?: string;
-  priority?: number;
-  parentPageId?: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  postalCode: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  email?: string;
+  website?: string;
+  isMainLocation: boolean;
+  isActive: boolean;
+  openingHours?: UpdateOpeningHourRequest[];
+  additionalInfo?: Record<string, any>;
 }
 
-export interface SavePageStructureRequest {
-  pageId: string;
-  components: PageComponent[];
+export interface CreateOpeningHourRequest {
+  dayOfWeek: DayOfWeek;
+  openTime: string;
+  closeTime: string;
+  isClosed?: boolean;
+  isOpen24Hours?: boolean;
+  notes?: string;
 }
 
-export enum PageStatus {
-  Draft = 0,
-  Published = 1,
-  Archived = 2,
-  Scheduled = 3,
+export interface UpdateOpeningHourRequest {
+  id?: number; // Changed from string to number
+  dayOfWeek: DayOfWeek;
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
+  isOpen24Hours: boolean;
+  notes?: string;
 }
 
-export enum ComponentType {
-  Text = 0,
-  Image = 1,
-  Button = 2,
-  Container = 3,
-  Grid = 4,
-  Card = 5,
-  List = 6,
-  Form = 7,
-  Video = 8,
-  Map = 9,
-  Gallery = 10,
-  Slider = 11,
-  Navigation = 12,
-  Footer = 13,
-  Header = 14,
-  Sidebar = 15,
+export enum DayOfWeek {
+  Sunday = 0,
+  Monday = 1,
+  Tuesday = 2,
+  Wednesday = 3,
+  Thursday = 4,
+  Friday = 5,
+  Saturday = 6,
 }

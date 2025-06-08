@@ -1,5 +1,8 @@
+// src/types/user.ts
+import { UserRole } from './auth';
+
 export interface UserListItem {
-  id: string;
+  id: number; // Changed from string to number
   email: string;
   username: string;
   firstName: string;
@@ -8,7 +11,8 @@ export interface UserListItem {
   isLocked: boolean;
   lastLoginAt?: string;
   createdAt: string;
-   role: string;
+  role: UserRole;
+  roleName: string;
 }
 
 export interface CreateUserRequest {
@@ -21,7 +25,7 @@ export interface CreateUserRequest {
   avatar?: string;
   timezone?: string;
   language?: string;
-   role: string;
+  role: UserRole;
   preferences?: Record<string, any>;
 }
 
@@ -34,6 +38,6 @@ export interface UpdateUserRequest {
   avatar?: string;
   timezone?: string;
   language?: string;
-  role: string;
+  role: UserRole;
   preferences?: Record<string, any>;
 }

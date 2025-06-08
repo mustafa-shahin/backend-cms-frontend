@@ -1,9 +1,19 @@
+// src/types/auth.ts
+export enum UserRole {
+  Customer = 0,
+  Admin = 1,
+  Dev = 2
+}
+
 export interface User {
-  id: string;
+  id: number; // Changed from string to number to match backend
   email: string;
   username: string;
   firstName: string;
   lastName: string;
+  fullName?: string;
+  role: UserRole;
+  roleDisplayName: string;
   isActive: boolean;
   isLocked: boolean;
   lastLoginAt?: string;
@@ -13,22 +23,28 @@ export interface User {
   emailVerifiedAt?: string;
   createdAt: string;
   updatedAt: string;
-  roles: Role[];
   preferences: Record<string, any>;
-}
-
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  permissions: Permission[];
-}
-
-export interface Permission {
-  id: string;
-  name: string;
-  resource: string;
-  action: string;
+  
+  // Optional 2FA fields
+  twoFactorEnabled?: boolean;
+  recoveryCodes?: string[];
+  
+  // Optional personal info
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  
+  // Optional billing/shipping addresses
+  billingAddress?: string;
+  billingCity?: string;
+  billingState?: string;
+  billingCountry?: string;
+  billingPostalCode?: string;
+  shippingAddress?: string;
+  shippingCity?: string;
+  shippingState?: string;
+  shippingCountry?: string;
+  shippingPostalCode?: string;
 }
 
 export interface LoginRequest {
