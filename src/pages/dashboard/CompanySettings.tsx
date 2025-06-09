@@ -1,4 +1,3 @@
-// src/pages/dashboard/CompanySettings.tsx
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { useForm } from 'react-hook-form';

@@ -1,6 +1,6 @@
-// src/types/company.ts
+
 export interface Company {
-  id: number; // Changed from string to number to match backend
+  id: number; 
   name: string;
   description?: string;
   website?: string;
@@ -49,7 +49,7 @@ export interface UpdateCompanyRequest {
 }
 
 export interface Location {
-  id: number; // Changed from string to number to match backend
+  id: number; 
   name: string;
   description?: string;
   address: string;
@@ -71,7 +71,7 @@ export interface Location {
 }
 
 export interface OpeningHour {
-  id: number; // Changed from string to number to match backend
+  id: number; 
   dayOfWeek: DayOfWeek;
   openTime: string;
   closeTime: string;
@@ -128,7 +128,7 @@ export interface CreateOpeningHourRequest {
 }
 
 export interface UpdateOpeningHourRequest {
-  id?: number; // Changed from string to number to match backend
+  id?: number; 
   dayOfWeek: DayOfWeek;
   openTime: string;
   closeTime: string;

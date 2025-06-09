@@ -1,8 +1,8 @@
-// src/types/user.ts
+
 import { UserRole } from './auth';
 
 export interface UserListItem {
-  id: number; // Changed from string to number
+  id: number;
   email: string;
   username: string;
   firstName: string;

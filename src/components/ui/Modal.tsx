@@ -1,4 +1,4 @@
-// src/components/ui/Modal.tsx
+
 import React, { Fragment, ReactNode } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';

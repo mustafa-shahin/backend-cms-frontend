@@ -1,4 +1,4 @@
-// src/components/layout/Sidebar.tsx
+
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -62,12 +62,6 @@ const navigation: NavigationItem[] = [
     href: '/dashboard/locations', 
     icon: MapPinIcon, 
     iconSolid: MapPinIconSolid 
-  },
-  { 
-    name: 'Jobs', 
-    href: '/dashboard/jobs', 
-    icon: BriefcaseIcon, 
-    iconSolid: BriefcaseIconSolid 
   },
 ];
 

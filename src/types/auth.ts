@@ -1,4 +1,4 @@
-// src/types/auth.ts
+
 export enum UserRole {
   Customer = 0,
   Admin = 1,
@@ -6,7 +6,7 @@ export enum UserRole {
 }
 
 export interface User {
-  id: number; // Changed from string to number to match backend
+  id: number; 
   email: string;
   username: string;
   firstName: string;

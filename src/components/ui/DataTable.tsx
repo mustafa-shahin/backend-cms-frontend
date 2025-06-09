@@ -1,4 +1,3 @@
-// src/components/ui/DataTable.tsx
 import React, { ReactNode } from 'react';
 import Button from './Button';
 

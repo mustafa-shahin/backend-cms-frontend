@@ -1,4 +1,4 @@
-// src/types/page.ts
+
 export enum PageStatus {
   Draft = 'draft',
   Published = 'published',

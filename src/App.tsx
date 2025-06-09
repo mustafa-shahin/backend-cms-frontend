@@ -1,4 +1,4 @@
-// src/App.tsx
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from 'react-query';
@@ -13,7 +13,6 @@ import Dashboard from './pages/dashboard/dashboard/Dashboard';
 import PagesManagement from './pages/dashboard/PagesManagement';
 import UsersManagement from './pages/dashboard/UsersManagement';
 import CompanySettings from './pages/dashboard/CompanySettings';
-import JobsManagement from './pages/dashboard/JobsManagement';
 import PublicPage from './pages/public/PublicPage';
 import Home from './pages/public/Home';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -59,9 +58,6 @@ function App() {
                     
                     {/* Company Settings (includes locations) */}
                     <Route path="/dashboard/company" element={<CompanySettings />} />
-                    
-                    {/* Jobs Management */}
-                    <Route path="/dashboard/jobs" element={<JobsManagement />} />
                   </Route>
                 </Route>
               </Routes>
