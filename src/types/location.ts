@@ -74,3 +74,44 @@ export interface UpdateLocationRequest {
   addresses?: UpdateAddressRequest[];
   contactDetails?: UpdateContactDetailsRequest[];
 }
+export enum DayOfWeek {
+  Sunday = 0,
+  Monday = 1,
+  Tuesday = 2,
+  Wednesday = 3,
+  Thursday = 4,
+  Friday = 5,
+  Saturday = 6,
+}
+export interface OpeningHour {
+  id: number; 
+  dayOfWeek: DayOfWeek;
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
+  isOpen24Hours: boolean;
+  notes?: string;
+}
+
+
+
+
+
+export interface CreateOpeningHourRequest {
+  dayOfWeek: DayOfWeek;
+  openTime: string;
+  closeTime: string;
+  isClosed?: boolean;
+  isOpen24Hours?: boolean;
+  notes?: string;
+}
+
+export interface UpdateOpeningHourRequest {
+  id?: number; 
+  dayOfWeek: DayOfWeek;
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
+  isOpen24Hours: boolean;
+  notes?: string;
+}

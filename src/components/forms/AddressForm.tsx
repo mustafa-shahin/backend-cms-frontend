@@ -1,6 +1,6 @@
-// src/components/forms/AddressForm.tsx
+
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, FieldError } from 'react-hook-form';
 import Input from '../ui/Input';
 
 interface AddressFormProps {
@@ -16,13 +16,33 @@ const AddressForm: React.FC<AddressFormProps> = ({
 }) => {
   const { register, formState: { errors } } = useFormContext();
 
+  // Helper function to get nested error messages
+  const getErrorMessage = (path: string): string | undefined => {
+    const pathParts = path.split('.');
+    let current: any = errors;
+    
+    for (const part of pathParts) {
+      if (current && typeof current === 'object') {
+        current = current[part];
+      } else {
+        return undefined;
+      }
+    }
+    
+    if (current && typeof current === 'object' && 'message' in current) {
+      return (current as FieldError).message;
+    }
+    
+    return undefined;
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Input
           label="Street Address"
           {...register(`${prefix}.street`, { required: 'Street address is required' })}
-          error={errors[prefix]?.street?.message as string}
+          error={getErrorMessage(`${prefix}.street`)}
         />
         <Input
           label="Street Address 2 (Optional)"
@@ -34,17 +54,17 @@ const AddressForm: React.FC<AddressFormProps> = ({
         <Input
           label="City"
           {...register(`${prefix}.city`, { required: 'City is required' })}
-          error={errors[prefix]?.city?.message as string}
+          error={getErrorMessage(`${prefix}.city`)}
         />
         <Input
           label="State/Province"
           {...register(`${prefix}.state`, { required: 'State is required' })}
-          error={errors[prefix]?.state?.message as string}
+          error={getErrorMessage(`${prefix}.state`)}
         />
         <Input
           label="Postal Code"
           {...register(`${prefix}.postalCode`, { required: 'Postal code is required' })}
-          error={errors[prefix]?.postalCode?.message as string}
+          error={getErrorMessage(`${prefix}.postalCode`)}
         />
       </div>
 
@@ -52,7 +72,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
         <Input
           label="Country"
           {...register(`${prefix}.country`, { required: 'Country is required' })}
-          error={errors[prefix]?.country?.message as string}
+          error={getErrorMessage(`${prefix}.country`)}
         />
         <Input
           label="Region (Optional)"
@@ -98,4 +118,3 @@ const AddressForm: React.FC<AddressFormProps> = ({
 };
 
 export default AddressForm;
-

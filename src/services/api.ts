@@ -14,13 +14,13 @@ import {
 } from '../types/page';
 import { 
   Company, 
-  UpdateCompanyRequest,
+  UpdateCompanyRequest, 
+} from '../types/company';
+import {
   Location,
   CreateLocationRequest,
   UpdateLocationRequest 
-} from '../types/company';
-
-// Add this to your existing src/services/api.ts file
+} from '../types/location';
 import { 
   FileEntity, 
   Folder, 

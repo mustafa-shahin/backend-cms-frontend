@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useForm, FormProvider } from 'react-hook-form';
+import { useForm, FormProvider, useFieldArray } from 'react-hook-form';
 import { companyApi } from '../../services/api';
-import { UpdateCompanyRequest, Location, CreateLocationRequest, UpdateLocationRequest } from '../../types/company';
+import { UpdateCompanyRequest } from '../../types/company';
+import { Location, CreateLocationRequest, UpdateLocationRequest } from '../../types/location';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
@@ -10,15 +11,14 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import AddressForm from '../../components/forms/AddressForm';
-import ContactDetailsForm from '../../components/forms/ContactDetailsForm';
 import { 
   PlusIcon, 
   PencilIcon, 
   TrashIcon, 
   MapPinIcon,
   BuildingOfficeIcon,
-  StarIcon
+  StarIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
@@ -36,8 +36,6 @@ const CompanySettings: React.FC = () => {
   const { data: locations, isLoading: locationsLoading } = useQuery('locations', companyApi.getLocations);
 
   const companyForm = useForm<UpdateCompanyRequest>();
-  const createLocationForm = useForm<CreateLocationRequest>();
-  const editLocationForm = useForm<UpdateLocationRequest>();
 
   const updateCompanyMutation = useMutation(companyApi.updateCompany, {
     onSuccess: () => {
@@ -56,7 +54,6 @@ const CompanySettings: React.FC = () => {
       queryClient.invalidateQueries(['company']);
       toast.success('Location created successfully');
       setCreateLocationModalOpen(false);
-      createLocationForm.reset();
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to create location');
@@ -123,70 +120,6 @@ const CompanySettings: React.FC = () => {
 
   const handleEditLocation = (location: Location) => {
     setSelectedLocation(location);
-    editLocationForm.reset({
-      name: location.name,
-      description: location.description || '',
-      locationCode: location.locationCode || '',
-      locationType: location.locationType || 'Office',
-      isMainLocation: location.isMainLocation,
-      isActive: location.isActive,
-      addresses: location.addresses?.length ? location.addresses.map(addr => ({
-        street: addr.street,
-        street2: addr.street2 || '',
-        city: addr.city,
-        state: addr.state,
-        country: addr.country,
-        postalCode: addr.postalCode,
-        region: addr.region || '',
-        addressType: addr.addressType || '',
-        notes: addr.notes || '',
-        isDefault: addr.isDefault,
-      })) : [{
-        street: '',
-        street2: '',
-        city: '',
-        state: '',
-        country: '',
-        postalCode: '',
-        region: '',
-        addressType: '',
-        notes: '',
-        isDefault: true,
-      }],
-      contactDetails: location.contactDetails?.length ? location.contactDetails.map(contact => ({
-        primaryPhone: contact.primaryPhone || '',
-        secondaryPhone: contact.secondaryPhone || '',
-        mobile: contact.mobile || '',
-        fax: contact.fax || '',
-        email: contact.email || '',
-        secondaryEmail: contact.secondaryEmail || '',
-        website: contact.website || '',
-        linkedInProfile: contact.linkedInProfile || '',
-        twitterProfile: contact.twitterProfile || '',
-        facebookProfile: contact.facebookProfile || '',
-        instagramProfile: contact.instagramProfile || '',
-        whatsAppNumber: contact.whatsAppNumber || '',
-        telegramHandle: contact.telegramHandle || '',
-        contactType: contact.contactType || '',
-        isDefault: contact.isDefault,
-      })) : [{
-        primaryPhone: '',
-        secondaryPhone: '',
-        mobile: '',
-        fax: '',
-        email: '',
-        secondaryEmail: '',
-        website: '',
-        linkedInProfile: '',
-        twitterProfile: '',
-        facebookProfile: '',
-        instagramProfile: '',
-        whatsAppNumber: '',
-        telegramHandle: '',
-        contactType: '',
-        isDefault: true,
-      }],
-    });
     setEditLocationModalOpen(true);
   };
 
@@ -203,23 +136,16 @@ const CompanySettings: React.FC = () => {
     updateCompanyMutation.mutate(data);
   };
 
-  const onCreateLocationSubmit = (data: CreateLocationRequest) => {
-    createLocationMutation.mutate(data);
-  };
-
-  const onEditLocationSubmit = (data: UpdateLocationRequest) => {
-    if (selectedLocation) {
-      updateLocationMutation.mutate({ id: selectedLocation.id, data });
-    }
-  };
-
   // Enhanced Create Location Modal Component
-  const EnhancedCreateLocationModal = () => {
+  const CreateLocationModal = () => {
     const methods = useForm<CreateLocationRequest>({
       defaultValues: {
+        name: '',
+        description: '',
+        locationCode: '',
+        locationType: 'Office',
         isActive: true,
         isMainLocation: false,
-        locationType: 'Office',
         addresses: [{
           street: '',
           street2: '',
@@ -228,7 +154,7 @@ const CompanySettings: React.FC = () => {
           country: '',
           postalCode: '',
           region: '',
-          addressType: '',
+          addressType: 'Main',
           notes: '',
           isDefault: true,
         }],
@@ -246,12 +172,29 @@ const CompanySettings: React.FC = () => {
           instagramProfile: '',
           whatsAppNumber: '',
           telegramHandle: '',
-          contactType: '',
+          contactType: 'Business',
           isDefault: true,
         }],
+        openingHours: [],
+        locationSettings: {},
+        additionalInfo: {},
       }
     });
-    
+
+    const { fields: addressFields, append: appendAddress, remove: removeAddress } = useFieldArray({
+      control: methods.control,
+      name: 'addresses'
+    });
+
+    const { fields: contactFields, append: appendContact, remove: removeContact } = useFieldArray({
+      control: methods.control,
+      name: 'contactDetails'
+    });
+
+    const onSubmit = (data: CreateLocationRequest) => {
+      createLocationMutation.mutate(data);
+    };
+
     return (
       <Modal
         open={createLocationModalOpen}
@@ -264,7 +207,7 @@ const CompanySettings: React.FC = () => {
               Cancel
             </Button>
             <Button 
-              onClick={methods.handleSubmit(onCreateLocationSubmit)}
+              onClick={methods.handleSubmit(onSubmit)}
               loading={createLocationMutation.isLoading}
             >
               Create Location
@@ -273,7 +216,7 @@ const CompanySettings: React.FC = () => {
         }
       >
         <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onCreateLocationSubmit)} className="space-y-6">
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
             {/* Basic Location Information */}
             <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Information</h3>
@@ -330,7 +273,6 @@ const CompanySettings: React.FC = () => {
                       type="checkbox"
                       id="isActive"
                       {...methods.register('isActive')}
-                      defaultChecked
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
                     <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-white">
@@ -343,14 +285,296 @@ const CompanySettings: React.FC = () => {
 
             {/* Address Information */}
             <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Address Information</h3>
-              <AddressForm prefix="addresses.0" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Addresses</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendAddress({
+                    street: '',
+                    street2: '',
+                    city: '',
+                    state: '',
+                    country: '',
+                    postalCode: '',
+                    region: '',
+                    addressType: '',
+                    notes: '',
+                    isDefault: false,
+                  })}
+                >
+                  <PlusIcon className="h-4 w-4 mr-1" />
+                  Add Address
+                </Button>
+              </div>
+
+              {addressFields.map((field, index) => (
+                <div key={field.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      Address {index + 1}
+                    </h4>
+                    {addressFields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeAddress(index)}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Street Address"
+                      {...methods.register(`addresses.${index}.street`, { required: 'Street address is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.street?.message}
+                    />
+                    <Input
+                      label="Street Address 2 (Optional)"
+                      {...methods.register(`addresses.${index}.street2`)}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <Input
+                      label="City"
+                      {...methods.register(`addresses.${index}.city`, { required: 'City is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.city?.message}
+                    />
+                    <Input
+                      label="State/Province"
+                      {...methods.register(`addresses.${index}.state`, { required: 'State is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.state?.message}
+                    />
+                    <Input
+                      label="Postal Code"
+                      {...methods.register(`addresses.${index}.postalCode`, { required: 'Postal code is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.postalCode?.message}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Country"
+                      {...methods.register(`addresses.${index}.country`, { required: 'Country is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.country?.message}
+                    />
+                    <Input
+                      label="Region (Optional)"
+                      {...methods.register(`addresses.${index}.region`)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Address Type"
+                      placeholder="e.g., Main Office, Billing, Shipping"
+                      {...methods.register(`addresses.${index}.addressType`)}
+                    />
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`address-${index}-default`}
+                        {...methods.register(`addresses.${index}.isDefault`)}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`address-${index}-default`} className="ml-2 block text-sm text-gray-900 dark:text-white">
+                        Set as default address
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      {...methods.register(`addresses.${index}.notes`)}
+                      rows={3}
+                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      placeholder="Additional address information..."
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Contact Details */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Contact Details</h3>
-              <ContactDetailsForm prefix="contactDetails.0" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Contact Details</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendContact({
+                    primaryPhone: '',
+                    secondaryPhone: '',
+                    mobile: '',
+                    fax: '',
+                    email: '',
+                    secondaryEmail: '',
+                    website: '',
+                    linkedInProfile: '',
+                    twitterProfile: '',
+                    facebookProfile: '',
+                    instagramProfile: '',
+                    whatsAppNumber: '',
+                    telegramHandle: '',
+                    contactType: '',
+                    isDefault: false,
+                  })}
+                >
+                  <PlusIcon className="h-4 w-4 mr-1" />
+                  Add Contact
+                </Button>
+              </div>
+
+              {contactFields.map((field, index) => (
+                <div key={field.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      Contact Details {index + 1}
+                    </h4>
+                    {contactFields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeContact(index)}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Primary Phone"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.primaryPhone`)}
+                    />
+                    <Input
+                      label="Secondary Phone"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.secondaryPhone`)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Mobile"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.mobile`)}
+                    />
+                    <Input
+                      label="Fax"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.fax`)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Email"
+                      type="email"
+                      {...methods.register(`contactDetails.${index}.email`, {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })}
+                      error={methods.formState.errors.contactDetails?.[index]?.email?.message}
+                    />
+                    <Input
+                      label="Secondary Email"
+                      type="email"
+                      {...methods.register(`contactDetails.${index}.secondaryEmail`, {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })}
+                      error={methods.formState.errors.contactDetails?.[index]?.secondaryEmail?.message}
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <Input
+                      label="Website"
+                      type="url"
+                      placeholder="https://example.com"
+                      {...methods.register(`contactDetails.${index}.website`)}
+                    />
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4 mt-4">
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Social Media & Messaging</h5>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="LinkedIn Profile"
+                        placeholder="https://linkedin.com/in/..."
+                        {...methods.register(`contactDetails.${index}.linkedInProfile`)}
+                      />
+                      <Input
+                        label="Twitter Profile"
+                        placeholder="https://twitter.com/..."
+                        {...methods.register(`contactDetails.${index}.twitterProfile`)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <Input
+                        label="Facebook Profile"
+                        placeholder="https://facebook.com/..."
+                        {...methods.register(`contactDetails.${index}.facebookProfile`)}
+                      />
+                      <Input
+                        label="Instagram Profile"
+                        placeholder="https://instagram.com/..."
+                        {...methods.register(`contactDetails.${index}.instagramProfile`)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <Input
+                        label="WhatsApp Number"
+                        type="tel"
+                        {...methods.register(`contactDetails.${index}.whatsAppNumber`)}
+                      />
+                      <Input
+                        label="Telegram Handle"
+                        placeholder="@username"
+                        {...methods.register(`contactDetails.${index}.telegramHandle`)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Contact Type"
+                      placeholder="e.g., Business, Personal, Emergency"
+                      {...methods.register(`contactDetails.${index}.contactType`)}
+                    />
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`contact-${index}-default`}
+                        {...methods.register(`contactDetails.${index}.isDefault`)}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`contact-${index}-default`} className="ml-2 block text-sm text-gray-900 dark:text-white">
+                        Set as default contact details
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </form>
         </FormProvider>
@@ -359,9 +583,97 @@ const CompanySettings: React.FC = () => {
   };
 
   // Enhanced Edit Location Modal Component
-  const EnhancedEditLocationModal = () => {
+  const EditLocationModal = () => {
     const methods = useForm<UpdateLocationRequest>();
-    
+
+    const { fields: addressFields, append: appendAddress, remove: removeAddress } = useFieldArray({
+      control: methods.control,
+      name: 'addresses'
+    });
+
+    const { fields: contactFields, append: appendContact, remove: removeContact } = useFieldArray({
+      control: methods.control,
+      name: 'contactDetails'
+    });
+
+    React.useEffect(() => {
+      if (selectedLocation) {
+        methods.reset({
+          name: selectedLocation.name,
+          description: selectedLocation.description || '',
+          locationCode: selectedLocation.locationCode || '',
+          locationType: selectedLocation.locationType || 'Office',
+          isMainLocation: selectedLocation.isMainLocation,
+          isActive: selectedLocation.isActive,
+          addresses: selectedLocation.addresses?.length ? selectedLocation.addresses.map(addr => ({
+            street: addr.street,
+            street2: addr.street2 || '',
+            city: addr.city,
+            state: addr.state,
+            country: addr.country,
+            postalCode: addr.postalCode,
+            region: addr.region || '',
+            addressType: addr.addressType || '',
+            notes: addr.notes || '',
+            isDefault: addr.isDefault,
+          })) : [{
+            street: '',
+            street2: '',
+            city: '',
+            state: '',
+            country: '',
+            postalCode: '',
+            region: '',
+            addressType: '',
+            notes: '',
+            isDefault: true,
+          }],
+          contactDetails: selectedLocation.contactDetails?.length ? selectedLocation.contactDetails.map(contact => ({
+            primaryPhone: contact.primaryPhone || '',
+            secondaryPhone: contact.secondaryPhone || '',
+            mobile: contact.mobile || '',
+            fax: contact.fax || '',
+            email: contact.email || '',
+            secondaryEmail: contact.secondaryEmail || '',
+            website: contact.website || '',
+            linkedInProfile: contact.linkedInProfile || '',
+            twitterProfile: contact.twitterProfile || '',
+            facebookProfile: contact.facebookProfile || '',
+            instagramProfile: contact.instagramProfile || '',
+            whatsAppNumber: contact.whatsAppNumber || '',
+            telegramHandle: contact.telegramHandle || '',
+            contactType: contact.contactType || '',
+            isDefault: contact.isDefault,
+          })) : [{
+            primaryPhone: '',
+            secondaryPhone: '',
+            mobile: '',
+            fax: '',
+            email: '',
+            secondaryEmail: '',
+            website: '',
+            linkedInProfile: '',
+            twitterProfile: '',
+            facebookProfile: '',
+            instagramProfile: '',
+            whatsAppNumber: '',
+            telegramHandle: '',
+            contactType: '',
+            isDefault: true,
+          }],
+          openingHours: selectedLocation.openingHours || [],
+          locationSettings: selectedLocation.locationSettings || {},
+          additionalInfo: selectedLocation.additionalInfo || {},
+        });
+      }
+    }, [selectedLocation, methods]);
+
+    const onSubmit = (data: UpdateLocationRequest) => {
+      if (selectedLocation) {
+        updateLocationMutation.mutate({ id: selectedLocation.id, data });
+      }
+    };
+
     return (
       <Modal
         open={editLocationModalOpen}
@@ -374,7 +686,7 @@ const CompanySettings: React.FC = () => {
               Cancel
             </Button>
             <Button 
-              onClick={methods.handleSubmit(onEditLocationSubmit)}
+              onClick={methods.handleSubmit(onSubmit)}
               loading={updateLocationMutation.isLoading}
             >
               Update Location
@@ -383,7 +695,8 @@ const CompanySettings: React.FC = () => {
         }
       >
         <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onEditLocationSubmit)} className="space-y-6">
+          <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Similar structure as Create Modal - content would be identical */}
             {/* Basic Location Information */}
             <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Information</h3>
@@ -451,14 +764,296 @@ const CompanySettings: React.FC = () => {
 
             {/* Address Information */}
             <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Address Information</h3>
-              <AddressForm prefix="addresses.0" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Addresses</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendAddress({
+                    street: '',
+                    street2: '',
+                    city: '',
+                    state: '',
+                    country: '',
+                    postalCode: '',
+                    region: '',
+                    addressType: '',
+                    notes: '',
+                    isDefault: false,
+                  })}
+                >
+                  <PlusIcon className="h-4 w-4 mr-1" />
+                  Add Address
+                </Button>
+              </div>
+
+              {addressFields.map((field, index) => (
+                <div key={field.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      Address {index + 1}
+                    </h4>
+                    {addressFields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeAddress(index)}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Street Address"
+                      {...methods.register(`addresses.${index}.street`, { required: 'Street address is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.street?.message}
+                    />
+                    <Input
+                      label="Street Address 2 (Optional)"
+                      {...methods.register(`addresses.${index}.street2`)}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <Input
+                      label="City"
+                      {...methods.register(`addresses.${index}.city`, { required: 'City is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.city?.message}
+                    />
+                    <Input
+                      label="State/Province"
+                      {...methods.register(`addresses.${index}.state`, { required: 'State is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.state?.message}
+                    />
+                    <Input
+                      label="Postal Code"
+                      {...methods.register(`addresses.${index}.postalCode`, { required: 'Postal code is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.postalCode?.message}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Country"
+                      {...methods.register(`addresses.${index}.country`, { required: 'Country is required' })}
+                      error={methods.formState.errors.addresses?.[index]?.country?.message}
+                    />
+                    <Input
+                      label="Region (Optional)"
+                      {...methods.register(`addresses.${index}.region`)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Address Type"
+                      placeholder="e.g., Main Office, Billing, Shipping"
+                      {...methods.register(`addresses.${index}.addressType`)}
+                    />
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`edit-address-${index}-default`}
+                        {...methods.register(`addresses.${index}.isDefault`)}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`edit-address-${index}-default`} className="ml-2 block text-sm text-gray-900 dark:text-white">
+                        Set as default address
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      {...methods.register(`addresses.${index}.notes`)}
+                      rows={3}
+                      className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      placeholder="Additional address information..."
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Contact Details */}
             <div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Contact Details</h3>
-              <ContactDetailsForm prefix="contactDetails.0" />
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Contact Details</h3>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendContact({
+                    primaryPhone: '',
+                    secondaryPhone: '',
+                    mobile: '',
+                    fax: '',
+                    email: '',
+                    secondaryEmail: '',
+                    website: '',
+                    linkedInProfile: '',
+                    twitterProfile: '',
+                    facebookProfile: '',
+                    instagramProfile: '',
+                    whatsAppNumber: '',
+                    telegramHandle: '',
+                    contactType: '',
+                    isDefault: false,
+                  })}
+                >
+                  <PlusIcon className="h-4 w-4 mr-1" />
+                  Add Contact
+                </Button>
+              </div>
+
+              {contactFields.map((field, index) => (
+                <div key={field.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      Contact Details {index + 1}
+                    </h4>
+                    {contactFields.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeContact(index)}
+                      >
+                        <XMarkIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input
+                      label="Primary Phone"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.primaryPhone`)}
+                    />
+                    <Input
+                      label="Secondary Phone"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.secondaryPhone`)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Mobile"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.mobile`)}
+                    />
+                    <Input
+                      label="Fax"
+                      type="tel"
+                      {...methods.register(`contactDetails.${index}.fax`)}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Email"
+                      type="email"
+                      {...methods.register(`contactDetails.${index}.email`, {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })}
+                      error={methods.formState.errors.contactDetails?.[index]?.email?.message}
+                    />
+                    <Input
+                      label="Secondary Email"
+                      type="email"
+                      {...methods.register(`contactDetails.${index}.secondaryEmail`, {
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })}
+                      error={methods.formState.errors.contactDetails?.[index]?.secondaryEmail?.message}
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <Input
+                      label="Website"
+                      type="url"
+                      placeholder="https://example.com"
+                      {...methods.register(`contactDetails.${index}.website`)}
+                    />
+                  </div>
+
+                  <div className="border-t border-gray-200 dark:border-gray-600 pt-4 mt-4">
+                    <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Social Media & Messaging</h5>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="LinkedIn Profile"
+                        placeholder="https://linkedin.com/in/..."
+                        {...methods.register(`contactDetails.${index}.linkedInProfile`)}
+                      />
+                      <Input
+                        label="Twitter Profile"
+                        placeholder="https://twitter.com/..."
+                        {...methods.register(`contactDetails.${index}.twitterProfile`)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <Input
+                        label="Facebook Profile"
+                        placeholder="https://facebook.com/..."
+                        {...methods.register(`contactDetails.${index}.facebookProfile`)}
+                      />
+                      <Input
+                        label="Instagram Profile"
+                        placeholder="https://instagram.com/..."
+                        {...methods.register(`contactDetails.${index}.instagramProfile`)}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <Input
+                        label="WhatsApp Number"
+                        type="tel"
+                        {...methods.register(`contactDetails.${index}.whatsAppNumber`)}
+                      />
+                      <Input
+                        label="Telegram Handle"
+                        placeholder="@username"
+                        {...methods.register(`contactDetails.${index}.telegramHandle`)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <Input
+                      label="Contact Type"
+                      placeholder="e.g., Business, Personal, Emergency"
+                      {...methods.register(`contactDetails.${index}.contactType`)}
+                    />
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={`edit-contact-${index}-default`}
+                        {...methods.register(`contactDetails.${index}.isDefault`)}
+                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={`edit-contact-${index}-default`} className="ml-2 block text-sm text-gray-900 dark:text-white">
+                        Set as default contact details
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </form>
         </FormProvider>
@@ -480,19 +1075,22 @@ const CompanySettings: React.FC = () => {
               )}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              {item.addresses?.length > 0 && (
-                <>
-                  {item.addresses[0].street}, {item.addresses[0].city}
-                </>
-              )}
+              {item.locationCode && `Code: ${item.locationCode}`}
             </div>
           </div>
         </div>
       ),
     },
     {
+      header: 'Type',
+      accessor: 'locationType',
+      render: (value) => (
+        <Badge variant="blue" size="sm">{value}</Badge>
+      ),
+    },
+    {
       header: 'Contact',
-      accessor: 'contactDetails',
+      accessor: (item) => item.contactDetails?.[0]?.email || item.contactDetails?.[0]?.primaryPhone || 'No contact',
       render: (value, item) => (
         <div>
           {item.contactDetails?.length > 0 && (
@@ -524,7 +1122,7 @@ const CompanySettings: React.FC = () => {
     },
     {
       header: 'Address',
-      accessor: 'addresses',
+      accessor: (item) => item.addresses?.[0]?.street || 'No address',
       render: (value, item) => (
         <div className="text-sm">
           {item.addresses?.length > 0 && (
@@ -750,11 +1348,11 @@ const CompanySettings: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Enhanced Create Location Modal */}
-      <EnhancedCreateLocationModal />
+      {/* Create Location Modal */}
+      <CreateLocationModal />
 
-      {/* Enhanced Edit Location Modal */}
-      <EnhancedEditLocationModal />
+      {/* Edit Location Modal */}
+      <EditLocationModal />
 
       {/* Delete Confirmation */}
       <ConfirmDialog

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, FieldError } from 'react-hook-form';
 import Input from '../ui/Input';
 
 interface ContactDetailsFormProps {
@@ -14,6 +14,26 @@ const ContactDetailsForm: React.FC<ContactDetailsFormProps> = ({
   showContactType = true 
 }) => {
   const { register, formState: { errors } } = useFormContext();
+
+  // Helper function to get nested error messages
+  const getErrorMessage = (path: string): string | undefined => {
+    const pathParts = path.split('.');
+    let current: any = errors;
+    
+    for (const part of pathParts) {
+      if (current && typeof current === 'object') {
+        current = current[part];
+      } else {
+        return undefined;
+      }
+    }
+    
+    if (current && typeof current === 'object' && 'message' in current) {
+      return (current as FieldError).message;
+    }
+    
+    return undefined;
+  };
 
   return (
     <div className="space-y-4">
@@ -53,7 +73,7 @@ const ContactDetailsForm: React.FC<ContactDetailsFormProps> = ({
               message: 'Invalid email address'
             }
           })}
-          error={errors[prefix]?.email?.message as string}
+          error={getErrorMessage(`${prefix}.email`)}
         />
         <Input
           label="Secondary Email"
@@ -64,7 +84,7 @@ const ContactDetailsForm: React.FC<ContactDetailsFormProps> = ({
               message: 'Invalid email address'
             }
           })}
-          error={errors[prefix]?.secondaryEmail?.message as string}
+          error={getErrorMessage(`${prefix}.secondaryEmail`)}
         />
       </div>
 
