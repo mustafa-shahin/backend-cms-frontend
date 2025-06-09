@@ -134,8 +134,6 @@ const CompanySettings: React.FC = () => {
       website: location.website || '',
       isMainLocation: location.isMainLocation,
       isActive: location.isActive,
-      latitude: location.latitude,
-      longitude: location.longitude,
     });
     setEditLocationModalOpen(true);
   };
@@ -511,21 +509,6 @@ const CompanySettings: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Latitude"
-              type="number"
-              step="any"
-              {...createLocationForm.register('latitude')}
-            />
-            <Input
-              label="Longitude"
-              type="number"
-              step="any"
-              {...createLocationForm.register('longitude')}
-            />
-          </div>
-
           <div className="flex items-center space-x-6">
             <div className="flex items-center">
               <input
@@ -631,21 +614,6 @@ const CompanySettings: React.FC = () => {
               label="Website"
               type="url"
               {...editLocationForm.register('website')}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Latitude"
-              type="number"
-              step="any"
-              {...editLocationForm.register('latitude')}
-            />
-            <Input
-              label="Longitude"
-              type="number"
-              step="any"
-              {...editLocationForm.register('longitude')}
             />
           </div>
 

@@ -57,8 +57,6 @@ export interface Location {
   state: string;
   country: string;
   postalCode: string;
-  latitude?: number;
-  longitude?: number;
   phone?: string;
   email?: string;
   website?: string;
@@ -88,8 +86,6 @@ export interface CreateLocationRequest {
   state: string;
   country: string;
   postalCode: string;
-  latitude?: number;
-  longitude?: number;
   phone?: string;
   email?: string;
   website?: string;
@@ -107,8 +103,6 @@ export interface UpdateLocationRequest {
   state: string;
   country: string;
   postalCode: string;
-  latitude?: number;
-  longitude?: number;
   phone?: string;
   email?: string;
   website?: string;

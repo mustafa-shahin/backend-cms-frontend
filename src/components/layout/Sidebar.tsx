@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,6 +12,10 @@ import {
   BriefcaseIcon,
   SunIcon,
   MoonIcon,
+  FolderIcon,
+  PhotoIcon,
+  DocumentIcon,
+  VideoCameraIcon,
 } from '@heroicons/react/24/outline';
 import {
   HomeIcon as HomeIconSolid,
@@ -22,6 +25,10 @@ import {
   MapPinIcon as MapPinIconSolid,
   CogIcon as CogIconSolid,
   BriefcaseIcon as BriefcaseIconSolid,
+  FolderIcon as FolderIconSolid,
+  PhotoIcon as PhotoIconSolid,
+  DocumentIcon as DocumentIconSolid,
+  VideoCameraIcon as VideoCameraIconSolid,
 } from '@heroicons/react/24/solid';
 
 interface NavigationItem {
@@ -30,6 +37,7 @@ interface NavigationItem {
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   iconSolid: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   count?: number;
+  children?: NavigationItem[];
 }
 
 const navigation: NavigationItem[] = [
@@ -55,13 +63,47 @@ const navigation: NavigationItem[] = [
     name: 'Company', 
     href: '/dashboard/company', 
     icon: BuildingOfficeIcon, 
-    iconSolid: BuildingOfficeIconSolid 
+    iconSolid: BuildingOfficeIconSolid,
+    children: [
+      {
+        name: 'Locations',
+        href: '/dashboard/company#locations',
+        icon: MapPinIcon,
+        iconSolid: MapPinIconSolid,
+      }
+    ]
   },
   { 
-    name: 'Locations', 
-    href: '/dashboard/locations', 
-    icon: MapPinIcon, 
-    iconSolid: MapPinIconSolid 
+    name: 'Files', 
+    href: '/dashboard/files', 
+    icon: FolderIcon, 
+    iconSolid: FolderIconSolid,
+    children: [
+      {
+        name: 'All Files',
+        href: '/dashboard/files',
+        icon: FolderIcon,
+        iconSolid: FolderIconSolid,
+      },
+      {
+        name: 'Photos',
+        href: '/dashboard/files/photos',
+        icon: PhotoIcon,
+        iconSolid: PhotoIconSolid,
+      },
+      {
+        name: 'Documents',
+        href: '/dashboard/files/documents',
+        icon: DocumentIcon,
+        iconSolid: DocumentIconSolid,
+      },
+      {
+        name: 'Videos',
+        href: '/dashboard/files/videos',
+        icon: VideoCameraIcon,
+        iconSolid: VideoCameraIconSolid,
+      }
+    ]
   },
 ];
 
@@ -74,7 +116,12 @@ const Sidebar: React.FC = () => {
     if (href === '/dashboard') {
       return location.pathname === '/dashboard';
     }
-    return location.pathname.startsWith(href);
+    return location.pathname.startsWith(href.split('#')[0]);
+  };
+
+  const isChildActive = (parentHref: string, children?: NavigationItem[]) => {
+    if (!children) return false;
+    return children.some(child => isActive(child.href));
   };
 
   return (
@@ -94,21 +141,22 @@ const Sidebar: React.FC = () => {
             <ul role="list" className="-mx-2 space-y-1">
               {navigation.map((item) => {
                 const active = isActive(item.href);
-                const IconComponent = active ? item.iconSolid : item.icon;
+                const hasActiveChild = isChildActive(item.href, item.children);
+                const IconComponent = active || hasActiveChild ? item.iconSolid : item.icon;
                 
                 return (
                   <li key={item.name}>
                     <NavLink
                       to={item.href}
                       className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-colors ${
-                        active
+                        active || hasActiveChild
                           ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400'
                       }`}
                     >
                       <IconComponent
                         className={`h-6 w-6 shrink-0 ${
-                          active ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400'
+                          active || hasActiveChild ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400'
                         }`}
                         aria-hidden="true"
                       />
@@ -116,7 +164,7 @@ const Sidebar: React.FC = () => {
                       {item.count && (
                         <span
                           className={`ml-auto w-9 min-w-max whitespace-nowrap rounded-full px-2.5 py-0.5 text-center text-xs font-medium leading-5 ${
-                            active
+                            active || hasActiveChild
                               ? 'bg-primary-100 dark:bg-primary-800 text-primary-600 dark:text-primary-300'
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-300 group-hover:bg-gray-200 dark:group-hover:bg-gray-600'
                           }`}
@@ -125,6 +173,37 @@ const Sidebar: React.FC = () => {
                         </span>
                       )}
                     </NavLink>
+                    
+                    {/* Sub-menu items */}
+                    {item.children && (active || hasActiveChild) && (
+                      <ul className="mt-1 ml-6 space-y-1">
+                        {item.children.map((child) => {
+                          const childActive = isActive(child.href);
+                          const ChildIcon = childActive ? child.iconSolid : child.icon;
+                          
+                          return (
+                            <li key={child.name}>
+                              <NavLink
+                                to={child.href}
+                                className={`group flex gap-x-3 rounded-md p-2 text-sm leading-6 transition-colors ${
+                                  childActive
+                                    ? 'bg-primary-50 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400 font-medium'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-primary-600 dark:hover:text-primary-400'
+                                }`}
+                              >
+                                <ChildIcon
+                                  className={`h-5 w-5 shrink-0 ${
+                                    childActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400'
+                                  }`}
+                                  aria-hidden="true"
+                                />
+                                {child.name}
+                              </NavLink>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
                   </li>
                 );
               })}
