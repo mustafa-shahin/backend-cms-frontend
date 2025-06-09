@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { companyApi } from '../../services/api';
 import { UpdateCompanyRequest, Location, CreateLocationRequest, UpdateLocationRequest } from '../../types/company';
 import Button from '../../components/ui/Button';
@@ -10,6 +10,8 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import DataTable, { Column } from '../../components/ui/DataTable';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import AddressForm from '../../components/forms/AddressForm';
+import ContactDetailsForm from '../../components/forms/ContactDetailsForm';
 import { 
   PlusIcon, 
   PencilIcon, 
@@ -124,16 +126,66 @@ const CompanySettings: React.FC = () => {
     editLocationForm.reset({
       name: location.name,
       description: location.description || '',
-      address: location.address,
-      city: location.city,
-      state: location.state,
-      country: location.country,
-      postalCode: location.postalCode,
-      phone: location.phone || '',
-      email: location.email || '',
-      website: location.website || '',
+      locationCode: location.locationCode || '',
+      locationType: location.locationType || 'Office',
       isMainLocation: location.isMainLocation,
       isActive: location.isActive,
+      addresses: location.addresses?.length ? location.addresses.map(addr => ({
+        street: addr.street,
+        street2: addr.street2 || '',
+        city: addr.city,
+        state: addr.state,
+        country: addr.country,
+        postalCode: addr.postalCode,
+        region: addr.region || '',
+        addressType: addr.addressType || '',
+        notes: addr.notes || '',
+        isDefault: addr.isDefault,
+      })) : [{
+        street: '',
+        street2: '',
+        city: '',
+        state: '',
+        country: '',
+        postalCode: '',
+        region: '',
+        addressType: '',
+        notes: '',
+        isDefault: true,
+      }],
+      contactDetails: location.contactDetails?.length ? location.contactDetails.map(contact => ({
+        primaryPhone: contact.primaryPhone || '',
+        secondaryPhone: contact.secondaryPhone || '',
+        mobile: contact.mobile || '',
+        fax: contact.fax || '',
+        email: contact.email || '',
+        secondaryEmail: contact.secondaryEmail || '',
+        website: contact.website || '',
+        linkedInProfile: contact.linkedInProfile || '',
+        twitterProfile: contact.twitterProfile || '',
+        facebookProfile: contact.facebookProfile || '',
+        instagramProfile: contact.instagramProfile || '',
+        whatsAppNumber: contact.whatsAppNumber || '',
+        telegramHandle: contact.telegramHandle || '',
+        contactType: contact.contactType || '',
+        isDefault: contact.isDefault,
+      })) : [{
+        primaryPhone: '',
+        secondaryPhone: '',
+        mobile: '',
+        fax: '',
+        email: '',
+        secondaryEmail: '',
+        website: '',
+        linkedInProfile: '',
+        twitterProfile: '',
+        facebookProfile: '',
+        instagramProfile: '',
+        whatsAppNumber: '',
+        telegramHandle: '',
+        contactType: '',
+        isDefault: true,
+      }],
     });
     setEditLocationModalOpen(true);
   };
@@ -161,6 +213,259 @@ const CompanySettings: React.FC = () => {
     }
   };
 
+  // Enhanced Create Location Modal Component
+  const EnhancedCreateLocationModal = () => {
+    const methods = useForm<CreateLocationRequest>({
+      defaultValues: {
+        isActive: true,
+        isMainLocation: false,
+        locationType: 'Office',
+        addresses: [{
+          street: '',
+          street2: '',
+          city: '',
+          state: '',
+          country: '',
+          postalCode: '',
+          region: '',
+          addressType: '',
+          notes: '',
+          isDefault: true,
+        }],
+        contactDetails: [{
+          primaryPhone: '',
+          secondaryPhone: '',
+          mobile: '',
+          fax: '',
+          email: '',
+          secondaryEmail: '',
+          website: '',
+          linkedInProfile: '',
+          twitterProfile: '',
+          facebookProfile: '',
+          instagramProfile: '',
+          whatsAppNumber: '',
+          telegramHandle: '',
+          contactType: '',
+          isDefault: true,
+        }],
+      }
+    });
+    
+    return (
+      <Modal
+        open={createLocationModalOpen}
+        onClose={() => setCreateLocationModalOpen(false)}
+        title="Add New Location"
+        size="2xl"
+        footer={
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setCreateLocationModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={methods.handleSubmit(onCreateLocationSubmit)}
+              loading={createLocationMutation.isLoading}
+            >
+              Create Location
+            </Button>
+          </div>
+        }
+      >
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onCreateLocationSubmit)} className="space-y-6">
+            {/* Basic Location Information */}
+            <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Location Name"
+                  {...methods.register('name', { required: 'Location name is required' })}
+                  error={methods.formState.errors.name?.message}
+                />
+                <Input
+                  label="Location Code"
+                  placeholder="e.g., NYC001"
+                  {...methods.register('locationCode')}
+                />
+              </div>
+              
+              <div className="mt-4">
+                <Input
+                  label="Description"
+                  {...methods.register('description')}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Location Type
+                  </label>
+                  <select
+                    {...methods.register('locationType')}
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  >
+                    <option value="Branch">Branch</option>
+                    <option value="Headquarters">Headquarters</option>
+                    <option value="Warehouse">Warehouse</option>
+                    <option value="Office">Office</option>
+                    <option value="Store">Store</option>
+                  </select>
+                </div>
+                <div className="flex items-end space-x-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isMainLocation"
+                      {...methods.register('isMainLocation')}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isMainLocation" className="ml-2 block text-sm text-gray-900 dark:text-white">
+                      Main Location
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      {...methods.register('isActive')}
+                      defaultChecked
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-white">
+                      Active Location
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Address Information</h3>
+              <AddressForm prefix="addresses.0" />
+            </div>
+
+            {/* Contact Details */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Contact Details</h3>
+              <ContactDetailsForm prefix="contactDetails.0" />
+            </div>
+          </form>
+        </FormProvider>
+      </Modal>
+    );
+  };
+
+  // Enhanced Edit Location Modal Component
+  const EnhancedEditLocationModal = () => {
+    const methods = useForm<UpdateLocationRequest>();
+    
+    return (
+      <Modal
+        open={editLocationModalOpen}
+        onClose={() => setEditLocationModalOpen(false)}
+        title="Edit Location"
+        size="2xl"
+        footer={
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={() => setEditLocationModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={methods.handleSubmit(onEditLocationSubmit)}
+              loading={updateLocationMutation.isLoading}
+            >
+              Update Location
+            </Button>
+          </div>
+        }
+      >
+        <FormProvider {...methods}>
+          <form onSubmit={methods.handleSubmit(onEditLocationSubmit)} className="space-y-6">
+            {/* Basic Location Information */}
+            <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Information</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="Location Name"
+                  {...methods.register('name', { required: 'Location name is required' })}
+                  error={methods.formState.errors.name?.message}
+                />
+                <Input
+                  label="Location Code"
+                  {...methods.register('locationCode')}
+                />
+              </div>
+              
+              <div className="mt-4">
+                <Input
+                  label="Description"
+                  {...methods.register('description')}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Location Type
+                  </label>
+                  <select
+                    {...methods.register('locationType')}
+                    className="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  >
+                    <option value="Branch">Branch</option>
+                    <option value="Headquarters">Headquarters</option>
+                    <option value="Warehouse">Warehouse</option>
+                    <option value="Office">Office</option>
+                    <option value="Store">Store</option>
+                  </select>
+                </div>
+                <div className="flex items-end space-x-4">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editIsMainLocation"
+                      {...methods.register('isMainLocation')}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="editIsMainLocation" className="ml-2 block text-sm text-gray-900 dark:text-white">
+                      Main Location
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="editIsActive"
+                      {...methods.register('isActive')}
+                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="editIsActive" className="ml-2 block text-sm text-gray-900 dark:text-white">
+                      Active Location
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Address Information */}
+            <div className="border-b border-gray-200 dark:border-gray-600 pb-6">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Address Information</h3>
+              <AddressForm prefix="addresses.0" />
+            </div>
+
+            {/* Contact Details */}
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Contact Details</h3>
+              <ContactDetailsForm prefix="contactDetails.0" />
+            </div>
+          </form>
+        </FormProvider>
+      </Modal>
+    );
+  };
+
   const locationColumns: Column<Location>[] = [
     {
       header: 'Location',
@@ -175,7 +480,11 @@ const CompanySettings: React.FC = () => {
               )}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              {item.address}, {item.city}
+              {item.addresses?.length > 0 && (
+                <>
+                  {item.addresses[0].street}, {item.addresses[0].city}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -183,11 +492,19 @@ const CompanySettings: React.FC = () => {
     },
     {
       header: 'Contact',
-      accessor: 'phone',
+      accessor: 'contactDetails',
       render: (value, item) => (
         <div>
-          {item.phone && <div className="text-sm">{item.phone}</div>}
-          {item.email && <div className="text-sm text-gray-500 dark:text-gray-400">{item.email}</div>}
+          {item.contactDetails?.length > 0 && (
+            <>
+              {item.contactDetails[0].primaryPhone && (
+                <div className="text-sm">{item.contactDetails[0].primaryPhone}</div>
+              )}
+              {item.contactDetails[0].email && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">{item.contactDetails[0].email}</div>
+              )}
+            </>
+          )}
         </div>
       ),
     },
@@ -207,14 +524,18 @@ const CompanySettings: React.FC = () => {
     },
     {
       header: 'Address',
-      accessor: 'address',
+      accessor: 'addresses',
       render: (value, item) => (
         <div className="text-sm">
-          <div>{value}</div>
-          <div className="text-gray-500 dark:text-gray-400">
-            {item.city}, {item.state} {item.postalCode}
-          </div>
-          <div className="text-gray-500 dark:text-gray-400">{item.country}</div>
+          {item.addresses?.length > 0 && (
+            <>
+              <div>{item.addresses[0].street}</div>
+              <div className="text-gray-500 dark:text-gray-400">
+                {item.addresses[0].city}, {item.addresses[0].state} {item.addresses[0].postalCode}
+              </div>
+              <div className="text-gray-500 dark:text-gray-400">{item.addresses[0].country}</div>
+            </>
+          )}
         </div>
       ),
     },
@@ -429,220 +750,11 @@ const CompanySettings: React.FC = () => {
         </form>
       </Modal>
 
-      {/* Create Location Modal */}
-      <Modal
-        open={createLocationModalOpen}
-        onClose={() => setCreateLocationModalOpen(false)}
-        title="Add New Location"
-        size="xl"
-        footer={
-          <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => setCreateLocationModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={createLocationForm.handleSubmit(onCreateLocationSubmit)}
-              loading={createLocationMutation.isLoading}
-            >
-              Create Location
-            </Button>
-          </div>
-        }
-      >
-        <form onSubmit={createLocationForm.handleSubmit(onCreateLocationSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Location Name"
-              {...createLocationForm.register('name', { required: 'Location name is required' })}
-              error={createLocationForm.formState.errors.name?.message}
-            />
-            <Input
-              label="Description"
-              {...createLocationForm.register('description')}
-            />
-          </div>
+      {/* Enhanced Create Location Modal */}
+      <EnhancedCreateLocationModal />
 
-          <Input
-            label="Address"
-            {...createLocationForm.register('address', { required: 'Address is required' })}
-            error={createLocationForm.formState.errors.address?.message}
-          />
-
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="City"
-              {...createLocationForm.register('city', { required: 'City is required' })}
-              error={createLocationForm.formState.errors.city?.message}
-            />
-            <Input
-              label="State"
-              {...createLocationForm.register('state', { required: 'State is required' })}
-              error={createLocationForm.formState.errors.state?.message}
-            />
-            <Input
-              label="Postal Code"
-              {...createLocationForm.register('postalCode', { required: 'Postal code is required' })}
-              error={createLocationForm.formState.errors.postalCode?.message}
-            />
-          </div>
-
-          <Input
-            label="Country"
-            {...createLocationForm.register('country', { required: 'Country is required' })}
-            error={createLocationForm.formState.errors.country?.message}
-          />
-
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="Phone"
-              {...createLocationForm.register('phone')}
-            />
-            <Input
-              label="Email"
-              type="email"
-              {...createLocationForm.register('email')}
-            />
-            <Input
-              label="Website"
-              type="url"
-              {...createLocationForm.register('website')}
-            />
-          </div>
-
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isMainLocation"
-                {...createLocationForm.register('isMainLocation')}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="isMainLocation" className="ml-2 block text-sm text-gray-900 dark:text-white">
-                Main Location
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isActive"
-                {...createLocationForm.register('isActive')}
-                defaultChecked
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-white">
-                Active Location
-              </label>
-            </div>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Edit Location Modal */}
-      <Modal
-        open={editLocationModalOpen}
-        onClose={() => setEditLocationModalOpen(false)}
-        title="Edit Location"
-        size="xl"
-        footer={
-          <div className="flex justify-end space-x-3">
-            <Button variant="outline" onClick={() => setEditLocationModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={editLocationForm.handleSubmit(onEditLocationSubmit)}
-              loading={updateLocationMutation.isLoading}
-            >
-              Update Location
-            </Button>
-          </div>
-        }
-      >
-        <form onSubmit={editLocationForm.handleSubmit(onEditLocationSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Location Name"
-              {...editLocationForm.register('name', { required: 'Location name is required' })}
-              error={editLocationForm.formState.errors.name?.message}
-            />
-            <Input
-              label="Description"
-              {...editLocationForm.register('description')}
-            />
-          </div>
-
-          <Input
-            label="Address"
-            {...editLocationForm.register('address', { required: 'Address is required' })}
-            error={editLocationForm.formState.errors.address?.message}
-          />
-
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="City"
-              {...editLocationForm.register('city', { required: 'City is required' })}
-              error={editLocationForm.formState.errors.city?.message}
-            />
-            <Input
-              label="State"
-              {...editLocationForm.register('state', { required: 'State is required' })}
-              error={editLocationForm.formState.errors.state?.message}
-            />
-            <Input
-              label="Postal Code"
-              {...editLocationForm.register('postalCode', { required: 'Postal code is required' })}
-              error={editLocationForm.formState.errors.postalCode?.message}
-            />
-          </div>
-
-          <Input
-            label="Country"
-            {...editLocationForm.register('country', { required: 'Country is required' })}
-            error={editLocationForm.formState.errors.country?.message}
-          />
-
-          <div className="grid grid-cols-3 gap-4">
-            <Input
-              label="Phone"
-              {...editLocationForm.register('phone')}
-            />
-            <Input
-              label="Email"
-              type="email"
-              {...editLocationForm.register('email')}
-            />
-            <Input
-              label="Website"
-              type="url"
-              {...editLocationForm.register('website')}
-            />
-          </div>
-
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="editIsMainLocation"
-                {...editLocationForm.register('isMainLocation')}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="editIsMainLocation" className="ml-2 block text-sm text-gray-900 dark:text-white">
-                Main Location
-              </label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="editIsActive"
-                {...editLocationForm.register('isActive')}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="editIsActive" className="ml-2 block text-sm text-gray-900 dark:text-white">
-                Active Location
-              </label>
-            </div>
-          </div>
-        </form>
-      </Modal>
+      {/* Enhanced Edit Location Modal */}
+      <EnhancedEditLocationModal />
 
       {/* Delete Confirmation */}
       <ConfirmDialog

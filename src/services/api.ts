@@ -21,24 +21,6 @@ import {
 } from '../types/company';
 
 // Add this to your existing src/services/api.ts file
-
-import {
-  FileItem,
-  Folder,
-  FileUploadRequest,
-  MultipleFileUploadRequest,
-  UpdateFileRequest,
-  FileSearchRequest,
-  CreateFolderRequest,
-  UpdateFolderRequest,
-  MoveFileRequest,
-  CopyFileRequest,
-  MoveFolderRequest,
-  FilePreview,
-  FolderTree,
-  FileStatistics,
-  FileType
-} from '../types/file';
 import { 
   FileEntity, 
   Folder, 
@@ -56,6 +38,7 @@ import {
   CreateContactDetailsRequest, 
   UpdateContactDetailsRequest 
 } from '../types/contact';
+
 import { CreateUserRequest, UpdateUserRequest, UserListItem } from '../types/user';
 
 const BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5252/api';
@@ -297,7 +280,6 @@ async uploadFile(uploadData: FormData): Promise<FileEntity> {
   });
   return response.data;
 }
-
 async uploadMultipleFiles(uploadData: FormData): Promise<FileEntity[]> {
   const response: AxiosResponse<FileEntity[]> = await this.api.post('/files/upload/multiple', uploadData, {
     headers: {
@@ -307,8 +289,9 @@ async uploadMultipleFiles(uploadData: FormData): Promise<FileEntity[]> {
   return response.data;
 }
 
-  async getFile(id: number): Promise<FileItem> {
-    const response: AxiosResponse<FileItem> = await this.api.get(`/files/${id}`);
+
+  async getFile(id: number): Promise<FileEntity> {
+    const response: AxiosResponse<FileEntity> = await this.api.get(`/files/${id}`);
     return response.data;
   }
 
@@ -325,26 +308,21 @@ async getFiles(page: number = 1, pageSize: number = 20, folderId?: number): Prom
   const response: AxiosResponse<{ items: FileEntity[], totalCount: number }> = await this.api.get(`/files?${params}`);
   return response.data;
 }
-async getFileById(id: number): Promise<FileEntity> {
-  const response: AxiosResponse<FileEntity> = await this.api.get(`/files/${id}`);
-  return response.data;
-}
 
-  async getFilesByFolder(folderId?: number, page: number = 1, pageSize: number = 20): Promise<FileItem[]> {
+  async getFilesByFolder(folderId?: number, page: number = 1, pageSize: number = 20): Promise<FileEntity[]> {
     const params = new URLSearchParams({
       page: page.toString(),
       pageSize: pageSize.toString(),
     });
     
     const endpoint = folderId ? `/files/folder/${folderId}?${params}` : `/files?${params}`;
-    const response: AxiosResponse<FileItem[]> = await this.api.get(endpoint);
+    const response: AxiosResponse<FileEntity[]> = await this.api.get(endpoint);
     return response.data;
   }
-
-  async searchFiles(searchData: FileSearchRequest): Promise<FileItem[]> {
-    const response: AxiosResponse<FileItem[]> = await this.api.post('/files/search', searchData);
-    return response.data;
-  }
+async getFileById(id: number): Promise<FileEntity> {
+  const response: AxiosResponse<FileEntity> = await this.api.get(`/files/${id}`);
+  return response.data;
+}
 
 async downloadFile(id: number): Promise<Blob> {
   const response: AxiosResponse<Blob> = await this.api.get(`/files/${id}/download`, {
@@ -353,50 +331,51 @@ async downloadFile(id: number): Promise<Blob> {
   return response.data;
 }
 
-  async getFilePreview(id: number): Promise<FilePreview> {
-    const response: AxiosResponse<FilePreview> = await this.api.get(`/files/${id}/preview`);
+  async getFilePreview(id: number): Promise<FileEntity> {
+    const response: AxiosResponse<FileEntity> = await this.api.get(`/files/${id}/preview`);
     return response.data;
   }
+async searchFiles(searchTerm: string, page: number = 1, pageSize: number = 20): Promise<{ items: FileEntity[], totalCount: number }> {
+  const params = new URLSearchParams({
+    searchTerm,
+    page: page.toString(),
+    pageSize: pageSize.toString(),
+  });
+  
+  const response: AxiosResponse<{ items: FileEntity[], totalCount: number }> = await this.api.post(`/files/search`, {
+    searchTerm,
+    page,
+    pageSize,
+  });
+  return response.data;
+}
 
-  async updateFile(id: number, data: UpdateFileRequest): Promise<FileItem> {
-    const response: AxiosResponse<FileItem> = await this.api.put(`/files/${id}`, data);
-    return response.data;
-  }
-
-  async deleteFile(id: number): Promise<void> {
-    await this.api.delete(`/files/${id}`);
-  }
+async deleteFile(id: number): Promise<void> {
+  await this.api.delete(`/files/${id}`);
+}
 
   async deleteMultipleFiles(fileIds: number[]): Promise<void> {
     await this.api.post('/files/delete/multiple', { fileIds });
   }
 
-  async moveFile(data: MoveFileRequest): Promise<FileItem> {
-    const response: AxiosResponse<FileItem> = await this.api.post('/files/move', data);
+
+
+
+
+  async getRecentFiles(count: number = 10): Promise<FileEntity[]> {
+    const response: AxiosResponse<FileEntity[]> = await this.api.get(`/files/recent?count=${count}`);
     return response.data;
   }
 
-  async copyFile(data: CopyFileRequest): Promise<FileItem> {
-    const response: AxiosResponse<FileItem> = await this.api.post('/files/copy', data);
-    return response.data;
-  }
 
-  async getRecentFiles(count: number = 10): Promise<FileItem[]> {
-    const response: AxiosResponse<FileItem[]> = await this.api.get(`/files/recent?count=${count}`);
-    return response.data;
-  }
-
-  async getFileStatistics(): Promise<FileStatistics> {
-    const response: AxiosResponse<FileStatistics> = await this.api.get('/files/statistics');
-    return response.data;
-  }
 
   // Folders endpoints
 async createFolder(data: CreateFolderRequest): Promise<Folder> {
   const response: AxiosResponse<Folder> = await this.api.post('/folders', data);
   return response.data;
 }
-  async getFolder(id: number): Promise<Folder> {
+
+  async getFolderById(id: number): Promise<Folder> {
     const response: AxiosResponse<Folder> = await this.api.get(`/folders/${id}`);
     return response.data;
   }
@@ -410,9 +389,14 @@ async getFolders(parentFolderId?: number): Promise<Folder[]> {
   const response: AxiosResponse<Folder[]> = await this.api.get(`/folders?${params}`);
   return response.data;
 }
-async getFolderById(id: number): Promise<Folder> {
-  const response: AxiosResponse<Folder> = await this.api.get(`/folders/${id}`);
+
+async updateFolder(id: number, data: UpdateFolderRequest): Promise<Folder> {
+  const response: AxiosResponse<Folder> = await this.api.put(`/folders/${id}`, data);
   return response.data;
+}
+
+async deleteFolder(id: number, deleteFiles: boolean = false): Promise<void> {
+  await this.api.delete(`/folders/${id}?deleteFiles=${deleteFiles}`);
 }
 
 async getFolderTree(rootFolderId?: number): Promise<any> {
@@ -424,18 +408,7 @@ async getFolderTree(rootFolderId?: number): Promise<any> {
   const response = await this.api.get(`/folders/tree?${params}`);
   return response.data;
 }
-async updateFolder(id: number, data: UpdateFolderRequest): Promise<Folder> {
-  const response: AxiosResponse<Folder> = await this.api.put(`/folders/${id}`, data);
-  return response.data;
-}
-async deleteFolder(id: number, deleteFiles: boolean = false): Promise<void> {
-  await this.api.delete(`/folders/${id}?deleteFiles=${deleteFiles}`);
-}
 
-  async moveFolder(data: MoveFolderRequest): Promise<Folder> {
-    const response: AxiosResponse<Folder> = await this.api.post('/folders/move', data);
-    return response.data;
-  }
 
   async copyFolder(folderId: number, destinationFolderId?: number, newName?: string): Promise<Folder> {
     const response: AxiosResponse<Folder> = await this.api.post('/folders/copy', {
@@ -455,23 +428,6 @@ async deleteFolder(id: number, deleteFiles: boolean = false): Promise<void> {
     const response: AxiosResponse<Record<string, any>> = await this.api.get(`/folders/${folderId}/statistics`);
     return response.data;
   }
-
-  // Utility method to get files by type
-async searchFiles(searchTerm: string, page: number = 1, pageSize: number = 20): Promise<{ items: FileEntity[], totalCount: number }> {
-  const params = new URLSearchParams({
-    searchTerm,
-    page: page.toString(),
-    pageSize: pageSize.toString(),
-  });
-  
-  const response: AxiosResponse<{ items: FileEntity[], totalCount: number }> = await this.api.post(`/files/search`, {
-    searchTerm,
-    page,
-    pageSize,
-  });
-  return response.data;
-}
-// Address endpoints
 async getAddressesByEntity(entityType: string, entityId: number): Promise<Address[]> {
   const response: AxiosResponse<Address[]> = await this.api.get(`/addresses/entity/${entityType}/${entityId}`);
   return response.data;
@@ -518,6 +474,8 @@ async updateContactDetails(id: number, data: UpdateContactDetailsRequest): Promi
 async deleteContactDetails(id: number): Promise<void> {
   await this.api.delete(`/contact-details/${id}`);
 }
+}
+
 
 
 // Export individual API groups for better organization
@@ -571,19 +529,6 @@ export const filesApi = {
   downloadFile: (id: number) => apiService.downloadFile(id),
   deleteFile: (id: number) => apiService.deleteFile(id),
   searchFiles: (searchTerm: string, page?: number, pageSize?: number) => apiService.searchFiles(searchTerm, page, pageSize),
-};
-
-export const foldersApi = {
-  createFolder: (data: CreateFolderRequest) => apiService.createFolder(data),
-  getFolder: (id: number) => apiService.getFolder(id),
-  getFolders: (parentFolderId?: number) => apiService.getFolders(parentFolderId),
-  getFolderTree: (rootFolderId?: number) => apiService.getFolderTree(rootFolderId),
-  updateFolder: (id: number, data: UpdateFolderRequest) => apiService.updateFolder(id, data),
-  deleteFolder: (id: number, deleteFiles?: boolean) => apiService.deleteFolder(id, deleteFiles),
-  moveFolder: (data: MoveFolderRequest) => apiService.moveFolder(data),
-  copyFolder: (folderId: number, destinationFolderId?: number, newName?: string) => apiService.copyFolder(folderId, destinationFolderId, newName),
-  searchFolders: (searchTerm: string) => apiService.searchFolders(searchTerm),
-  getFolderStatistics: (folderId: number) => apiService.getFolderStatistics(folderId),
 };
 export const foldersApi = {
   getFolders: (parentFolderId?: number) => apiService.getFolders(parentFolderId),

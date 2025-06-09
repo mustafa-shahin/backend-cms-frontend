@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { filesApi, foldersApi } from '../../services/api';
-import { FileEntity, Folder, CreateFolderRequest } from '../../types/file';
+import { FileEntity, CreateFolderRequest } from '../../types/file';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
@@ -12,13 +12,12 @@ import {
   FolderOpenIcon,
   DocumentIcon,
   PhotoIcon,
-  VideoIcon,
+  DivideIcon,
   SpeakerWaveIcon,
   ArchiveBoxIcon,
-  PlusIcon,
+
   CloudArrowUpIcon,
   TrashIcon,
-  EyeIcon,
   ArrowDownTrayIcon,
   FolderPlusIcon,
 } from '@heroicons/react/24/outline';
@@ -116,7 +115,7 @@ const FileManager: React.FC<FileManagerProps> = ({
       case 1: // Image
         return <PhotoIcon className="h-5 w-5 text-green-500" />;
       case 2: // Video
-        return <VideoIcon className="h-5 w-5 text-red-500" />;
+        return <DivideIcon className="h-5 w-5 text-red-500" />;
       case 3: // Audio
         return <SpeakerWaveIcon className="h-5 w-5 text-purple-500" />;
       case 4: // Archive
